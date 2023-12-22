@@ -1,7 +1,7 @@
 <?php
 
-if (!function_exists('asset')) {
-    function asset($path, $secure = null)
+if (!function_exists('assets')) {
+    function assets($path, $secure = null)
     {
         // Your custom implementation here
         // You can call the original asset function if needed
