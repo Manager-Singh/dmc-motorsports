@@ -99,7 +99,7 @@
 @endsection
 
 @push('styles')
-<link rel="stylesheet" href="{{asset('public/backend/summernote/summernote.min.css')}}">
+<link rel="stylesheet" href="{{asset('backend/summernote/summernote.min.css')}}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css" />
 <style>
