@@ -9,8 +9,8 @@
          </div>
      </div>
     <div class="card-header py-3">
-      <h6 class="m-0 font-weight-bold text-primary float-left">Product Lists</h6>
-      <a href="{{route('product.create')}}" class="btn btn-primary btn-sm float-right" data-toggle="tooltip" data-placement="bottom" title="Add User"><i class="fas fa-plus"></i> Add Product</a>
+      <h6 class="m-0 font-weight-bold text-primary float-left">Items Lists</h6>
+      <!-- <a href="{{route('product.create')}}" class="btn btn-primary btn-sm float-right" data-toggle="tooltip" data-placement="bottom" title="Add User"><i class="fas fa-plus"></i> Add Product</a> -->
     </div>
     <div class="card-body">
       <div class="table-responsive">
@@ -19,13 +19,15 @@
           <thead>
             <tr>
               <th>S.N.</th>
+              <th>SKU</th>
               <th>Title</th>
+              <th>Product Type</th>
               <th>Category</th>
-              <th>Is Featured</th>
-              <th>Price</th>
-              <th>Discount</th>
-              <th>Size</th>
-              <th>Condition</th>
+              <!-- <th>Product Description</th> -->
+              <th>Price ($)</th>
+              <!-- <th>Discount</th> -->
+              <!-- <th>Size</th> -->
+              <!-- <th>Condition</th> -->
               <th>Brand</th>
               <th>Stock</th>
               <th>Photo</th>
@@ -36,13 +38,15 @@
           <tfoot>
             <tr>
               <th>S.N.</th>
+              <th>SKU</th>
               <th>Title</th>
+              <th>Product Type</th>
               <th>Category</th>
-              <th>Is Featured</th>
-              <th>Price</th>
-              <th>Discount</th>
-              <th>Size</th>
-              <th>Condition</th>
+              <!-- <th>Product Description</th> -->
+              <th>Price ($)</th>
+              <!-- <th>Discount</th> -->
+              <!-- <th>Size</th> -->
+              <!-- <th>Condition</th> -->
               <th>Brand</th>
               <th>Stock</th>
               <th>Photo</th>
@@ -54,62 +58,86 @@
 
             @foreach($products as $product)
               @php
-              $sub_cat_info=DB::table('categories')->select('title')->where('id',$product->child_cat_id)->get();
+             // print_r($product);
+             // die;
+             // $sub_cat_info=DB::table('categories')->select('title')->where('id',$product->child_cat_id)->get();
               // dd($sub_cat_info);
-              $brands=DB::table('brands')->select('title')->where('id',$product->brand_id)->get();
+             // $brands=DB::table('brands')->select('title')->where('id',$product->brand_id)->get();
               @endphp
                 <tr>
-                    <td>{{$product->id}}</td>
-                    <td>{{$product->title}}</td>
-                    <td>{{$product->cat_info['title']}}
-                      <sub>
-                          {{$product->sub_cat_info->title ?? ''}}
-                      </sub>
+                    <td>{{ $loop->index+1 }}</td>
+                    <td>{{$product->sku}}</td>
+                    <td>{{$product->name}}</td>
+                    <td>{{$product->product_type}}</td>
+                    <td>
+                      @php
+                      $total_cats  = count($product->categories);
+                      $counter = 1;
+                      @endphp
+                      @foreach($product->categories as $cat)
+                     
+                      <cat>
+                          {{$cat->title ?? ''}}
+                      </cat>
+                      @if($total_cats >$counter)
+                      ,
+                      @endif
+                      @php
+                      $counter++
+                      @endphp
+                      @endforeach
                     </td>
-                    <td>{{(($product->is_featured==1)? 'Yes': 'No')}}</td>
-                    <td>Rs. {{$product->price}} /-</td>
-                    <td>  {{$product->discount}}% OFF</td>
-                    <td>{{$product->size}}</td>
-                    <td>{{$product->condition}}</td>
+                    <!-- <td>{{(($product->product->description)? $product->product->description: '')}}</td> -->
+                    <td>{{$product->list_price}} /-</td>
+                    <!-- <td>{{$product->discount}}% OFF</td> -->
+                    <!-- <td>{{$product->size}}</td> -->
+                    <!-- <td>{{$product->condition}}</td> -->
                     <td> {{ucfirst($product->brand->title)}}</td>
                     <td>
-                      @if($product->stock>0)
-                      <span class="badge badge-primary">{{$product->stock}}</span>
+                      @if(getInventory($product->wps_id)>0)
+                      <span class="badge badge-primary">{{getInventory($product->wps_id)}}</span>
                       @else
-                      <span class="badge badge-danger">{{$product->stock}}</span>
+                      <span class="badge badge-danger">{{getInventory($product->wps_id)}}</span>
                       @endif
                     </td>
                     <td>
-                        @if($product->photo)
-                            @php
-                              $photo=explode(',',$product->photo);
-                              // dd($photo);
-                            @endphp
-                            <img src="{{$photo[0]}}" class="img-fluid zoom" style="max-width:80px" alt="{{$product->photo}}">
-                        @else
-                            <img src="{{asset('backend/img/thumbnail-default.jpg')}}" class="img-fluid" style="max-width:80px" alt="avatar.png">
-                        @endif
+                        
+                            @if(count($product->images)>0)
+                              @php
+                            
+                              $f_item_image = $product->images[0];
+                              $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$f_item_image->filename;    
+                              @endphp
+                              @else
+                              @php
+                              $fimg_url = asset('backend/img/thumbnail-default.jpg');
+                              @endphp
+                            @endif
+                            <img src="{{$fimg_url}}" class="img-fluid zoom" style="max-width:80px" alt="{{$fimg_url}}">
+                       
                     </td>
                     <td>
-                        @if($product->status=='active')
+                        @if($product->status=='NEW')
                             <span class="badge badge-success">{{$product->status}}</span>
                         @else
                             <span class="badge badge-warning">{{$product->status}}</span>
                         @endif
                     </td>
                     <td>
-                        <a href="{{route('product.edit',$product->id)}}" class="btn btn-primary btn-sm float-left mr-1" style="height:30px; width:30px;border-radius:50%" data-toggle="tooltip" title="edit" data-placement="bottom"><i class="fas fa-edit"></i></a>
-                    <form method="POST" action="{{route('product.destroy',[$product->id])}}">
+                        <a href="{{route('product.edit',$product->wps_id)}}" class="btn btn-primary btn-sm float-left mr-1" style="height:30px; width:30px;border-radius:50%" data-toggle="tooltip" title="edit" data-placement="bottom"><i class="fas fa-edit"></i></a>
+                    <!-- <form method="POST" action="{{route('product.destroy',[$product->id])}}">
                       @csrf
                       @method('delete')
                           <button class="btn btn-danger btn-sm dltBtn" data-id={{$product->id}} style="height:30px; width:30px;border-radius:50%" data-toggle="tooltip" data-placement="bottom" title="Delete"><i class="fas fa-trash-alt"></i></button>
-                        </form>
+                    </form> -->
                     </td>
                 </tr>
             @endforeach
           </tbody>
         </table>
-        <span style="float:right">{{$products->links()}}</span>
+        <div class="d-flex justify-content-center">
+          {{ $products->links('vendor.pagination.bootstrap-4') }}
+      </div>
         @else
           <h6 class="text-center">No Products found!!! Please create Product</h6>
         @endif

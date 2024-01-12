@@ -1,6 +1,6 @@
 @extends('frontend.layouts.master')
 
-@section('title','E-SHOP || PRODUCT PAGE')
+@section('title','DMC Motorsports || PRODUCT SEARCH PAGE')
 
 @section('main-content')
 	<!-- Breadcrumbs -->
@@ -10,8 +10,7 @@
                 <div class="col-12">
                     <div class="bread-inner">
                         <ul class="bread-list">
-                            <li><a href="index1.html">Home<i class="ti-arrow-right"></i></a></li>
-                            <li class="active"><a href="blog-single.html">Search Results</a></li>
+                            {!!$search_bred!!}
                         </ul>
                     </div>
                 </div>
@@ -19,6 +18,7 @@
         </div>
     </div>
     <!-- End Breadcrumbs -->
+    @include('frontend.partials.search')
     <section class="product-area shop-sidebar shop section">
         <div class="container">
             <div class="row">
@@ -50,7 +50,7 @@
                                                 @endphp
                                                 @else
                                                 @php
-                                                $fimg_url = 'backend/img/thumbnail-default.jpg';
+                                                $fimg_url = asset('backend/img/thumbnail-default.jpg');
                                                 @endphp
                                                  @endif
                                                 <img class="default-img" src="{{$fimg_url}}" alt="{{$fimg_url}}">
@@ -229,9 +229,10 @@
 
                     </div>
                     <div class="row">
-                        <div class="col-md-12 justify-content-center d-flex">
-                            {{-- {{$vehicles->appends($_GET)->links()}} --}}
+                        <div class="d-flex justify-content-center">
+                            {{$allItems->appends($_GET)->links('vendor.pagination.bootstrap-4')}}
                         </div>
+                    
                       </div>
 
                 </div>

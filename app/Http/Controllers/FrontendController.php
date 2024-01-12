@@ -13,8 +13,11 @@ use App\Models\Vehiclemake;
 use App\Models\Vehiclemodel;
 use App\Models\Vehicle;
 use App\Models\ItemVehicle;
+use App\Models\Vehicleyear;
 use App\Models\Item;
-
+use App\Models\VehiclemodelCategory;
+use App\Models\ItemCategory;
+use App\Models\Attributevalue;
 use App\User;
 use Auth;
 use Session;
@@ -36,13 +39,17 @@ class FrontendController extends Controller
         $banners=Banner::where('status','active')->limit(3)->orderBy('id','DESC')->get();
         // return $banner;
         $products=Product::has('items')->with(['photo','items','items.images'])->where('status','active')->orderBy('id','DESC')->limit(8)->get();
-        $category=Category::has('items')->with(['images.image'])->where('status','active')->where('is_parent',1)->orderBy('title','ASC')->paginate(12);
+        $category=Category::has('items')->with(['images.image'])->where('status','active')->where('is_parent',1)->orderBy('title','ASC')->paginate(6);
         $product_lists=Product::has('items')->with(['photo','items','items.images'])->where('status','active')->orderBy('id','DESC')->limit(6)->get();
         $category_banner_lists=Category::has('items')->with(['images.image'])->where('status','active')->where('is_parent',1)->inRandomOrder()->limit(3)->get();
         $Vehiclemake=Vehiclemake::pluck('name', 'wps_id')->all();
+        $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
+        ->groupBy('category_id')
+        ->get();
         
-        // return $category;
-        // print_r( $Vehiclemake);
+        
+        // // return $category;
+        // print_r( $vehicle_model_categories);
         // die;
         return view('frontend.index')
                 ->with('featured',$featured)
@@ -52,18 +59,53 @@ class FrontendController extends Controller
                 ->with('all_category_lists',$category)
                 ->with('category_banner_lists',$category_banner_lists)
                 ->with('vehiclemakes',$Vehiclemake)
+                ->with('vehicle_model_categories',$vehicle_model_categories)
                 ->with('product_lists',$product_lists);
     }   
+    
+    public function nhome(){
+        $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
+        ->groupBy('category_id')
+        ->get();
+        
+        return view('frontend.new-index')->with('vehicle_model_categories',$vehicle_model_categories);
+    }
     public function loadMore(Request $request)
     {
         // Get the current page from the request
         $page = $request->input('page', 1);
 
         // Fetch more products based on the page
-        $all_category_lists = Category::with(['images'])->where('status','active')->where('is_parent',1)->orderBy('title','ASC')->paginate(12, ['*'], 'page', $page);
+        $all_category_lists = Category::has('items')->with(['images.image'])->where('status','active')->where('is_parent',1)->orderBy('title','ASC')->paginate(6, ['*'], 'page', $page);
 
         // Return the HTML for the new products
         return view('frontend.partials.categories', compact('all_category_lists'))->render();
+    }
+    
+    public function getVehicleMakesCategories(Request $request)
+    {
+      
+
+        $vcatId = $request->input('vcatId');
+       
+
+        // VehiclemodelCategory
+        // Fetch the models based on the selected car maker
+        // $models = Vehiclemodel::where('vehiclemake_id',$carMakerId)->pluck('name', 'wps_id')->all();
+       $vehiclemodel_ids =  VehiclemodelCategory::where('category_id',$vcatId)->pluck('vehiclemodel_id')->all();
+       $vehiclemodel_ids = array_unique($vehiclemodel_ids);
+       
+        $Vehiclemake=Vehiclemake::whereIn('wps_id', $vehiclemodel_ids)->pluck('name', 'wps_id')->all();
+    //     print_r($Vehiclemake);
+    //    die;
+    // Prepare the HTML options for the model dropdown
+    $options = '';
+    foreach ($Vehiclemake as $wps=>$make) {
+        $options .= '<option value="' . $wps . '">' . $make . '</option>';
+    }
+
+    // Return the options as JSON
+    return response()->json(['options' => $options]);
     }
     public function getVehicleModels(Request $request)
     {
@@ -108,6 +150,8 @@ class FrontendController extends Controller
     public function searchItems(Request $request)
     {
         if($request->isMethod('post')){
+            
+        $vehicle_category = $request->vehicle_category;
         $vehicle_maker = $request->vehicle_maker;
         $vehicle_model = $request->vehicle_model;
         $vehicle_year = $request->vehicle_year;
@@ -124,10 +168,26 @@ class FrontendController extends Controller
     
         $vehicles = $query->pluck('wps_id');
         $allItems = ItemVehicle::has('item')->with(['item', 'item.brand', 'item.country', 'item.categories'])->whereIn('vehicle_id', $vehicles)->paginate(12);
+        $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
+        ->groupBy('category_id')
+        ->get();
+
+        $cat_name = Category::where('wps_id',$vehicle_category)->first()->title;
+        $v_make_name = Vehiclemake::where('wps_id',$vehicle_maker)->first()->name;
+        $v_model_name = Vehiclemodel::where('wps_id',$vehicle_model)->first()->name;
+        $v_year_name = Vehicleyear::where('wps_id',$vehicle_year)->first()->name;
+
+        $search_bred =''; 
+        $search_bred .= '<li>'.$cat_name.'<i class="ti-arrow-right"></i></li>';
+        $search_bred .= '<li>'.$v_make_name.'<i class="ti-arrow-right"></i></li>';
+        $search_bred .= '<li>'.$v_model_name.'<i class="ti-arrow-right"></i></li>';
+        $search_bred .= '<li>'.$v_year_name.'</li>';
         return view('frontend.search-items')
         ->with('vehicle_maker', $vehicle_maker)
         ->with('vehicle_model', $vehicle_model)
         ->with('vehicle_year', $vehicle_year)
+        ->with('vehicle_model_categories',$vehicle_model_categories)
+        ->with('search_bred',$search_bred)
         ->with('allItems', $allItems);
        
     }else{
@@ -171,14 +231,14 @@ class FrontendController extends Controller
 
     public function productDetail($slug){
         $product_detail= Item::getProductBySlug($slug);
-        print_r($product_detail);
-        die;
+        // print_r($product_detail);
+        // die;
         // dd($product_detail);
         return view('frontend.pages.product_detail')->with('product_detail',$product_detail);
     }
 
     public function productGrids(){
-        $products=Item::query();
+        $products=Item::query()->with('images');
         
         // print_r($products);
         // die;
@@ -198,10 +258,60 @@ class FrontendController extends Controller
         }
         if(!empty($_GET['sortBy'])){
             if($_GET['sortBy']=='title'){
-                $products=$products->has('images')->with('images')->where('status','!=','NLA')->orderBy('name','ASC');
+                $products=$products->where('status','!=','NLA')->orderBy('name','ASC');
             }
             if($_GET['sortBy']=='price'){
-                $products=$products->has('images')->with('images')->orderBy('list_price','ASC');
+                $products=$products->orderBy('list_price','ASC');
+            }
+        }
+
+        if(!empty($_GET['price'])){
+            $price=explode('-',$_GET['price']);
+            // return $price;
+            // if(isset($price[0]) && is_numeric($price[0])) $price[0]=floor(Helper::base_amount($price[0]));
+            // if(isset($price[1]) && is_numeric($price[1])) $price[1]=ceil(Helper::base_amount($price[1]));
+            
+            $products->whereBetween('list_price',$price);
+        }
+
+        $recent_products=Item::with('images')->where('status','!=','NLA')->orderBy('id','DESC')->limit(3)->get();
+        // Sort by number
+        if(!empty($_GET['show'])){
+            $products=$products->where('status','!=','NLA')->paginate($_GET['show']);
+        }
+        else{
+            $products=$products->where('status','!=','NLA')->paginate(9);
+        }
+        // Sort by name , price, category
+//  print_r($products);
+//         die;
+        $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
+        return view('frontend.pages.product-grids')->with('brands',$brands)->with('products',$products)->with('recent_products',$recent_products);
+    }
+    public function productLists(){
+        $products=Item::query()->with('images');
+        
+        
+        if(!empty($_GET['category'])){
+            $slug=explode(',',$_GET['category']);
+            // dd($slug);
+            $cat_ids=Category::select('id')->whereIn('slug',$slug)->pluck('id')->toArray();
+            // dd($cat_ids);
+            $products->whereIn('cat_id',$cat_ids)->paginate(9);
+            // return $products;
+        }
+        if(!empty($_GET['brand'])){
+            $slugs=explode(',',$_GET['brand']);
+            $brand_ids=Brand::select('id')->whereIn('slug',$slugs)->pluck('id')->toArray();
+            return $brand_ids;
+            $products->whereIn('brand_id',$brand_ids);
+        }
+        if(!empty($_GET['sortBy'])){
+            if($_GET['sortBy']=='title'){
+                $products=$products->orderBy('title','ASC');
+            }
+            if($_GET['sortBy']=='price'){
+                $products=$products->orderBy('list_price','ASC');
             }
         }
 
@@ -217,59 +327,10 @@ class FrontendController extends Controller
         $recent_products=Item::with('images')->where('status','!=','NLA')->orderBy('id','DESC')->limit(3)->get();
         // Sort by number
         if(!empty($_GET['show'])){
-            $products=$products->has('images')->with('images')->where('status','!=','NLA')->paginate($_GET['show']);
+            $products=$products->where('status','!=','NLA')->paginate($_GET['show']);
         }
         else{
-            $products=$products->has('images')->with('images')->where('status','!=','NLA')->paginate(9);
-        }
-        // Sort by name , price, category
-//  print_r($products);
-//         die;
-      
-        return view('frontend.pages.product-grids')->with('products',$products)->with('recent_products',$recent_products);
-    }
-    public function productLists(){
-        $products=Product::query();
-        
-        if(!empty($_GET['category'])){
-            $slug=explode(',',$_GET['category']);
-            // dd($slug);
-            $cat_ids=Category::select('id')->whereIn('slug',$slug)->pluck('id')->toArray();
-            // dd($cat_ids);
-            $products->whereIn('cat_id',$cat_ids)->paginate;
-            // return $products;
-        }
-        if(!empty($_GET['brand'])){
-            $slugs=explode(',',$_GET['brand']);
-            $brand_ids=Brand::select('id')->whereIn('slug',$slugs)->pluck('id')->toArray();
-            return $brand_ids;
-            $products->whereIn('brand_id',$brand_ids);
-        }
-        if(!empty($_GET['sortBy'])){
-            if($_GET['sortBy']=='title'){
-                $products=$products->where('status','active')->orderBy('title','ASC');
-            }
-            if($_GET['sortBy']=='price'){
-                $products=$products->orderBy('price','ASC');
-            }
-        }
-
-        if(!empty($_GET['price'])){
-            $price=explode('-',$_GET['price']);
-            // return $price;
-            // if(isset($price[0]) && is_numeric($price[0])) $price[0]=floor(Helper::base_amount($price[0]));
-            // if(isset($price[1]) && is_numeric($price[1])) $price[1]=ceil(Helper::base_amount($price[1]));
-            
-            $products->whereBetween('price',$price);
-        }
-
-        $recent_products=Product::where('status','active')->orderBy('id','DESC')->limit(3)->get();
-        // Sort by number
-        if(!empty($_GET['show'])){
-            $products=$products->where('status','active')->paginate($_GET['show']);
-        }
-        else{
-            $products=$products->where('status','active')->paginate(6);
+            $products=$products->where('status','!=','NLA')->paginate(6);
         }
         // Sort by name , price, category
 
@@ -318,60 +379,106 @@ class FrontendController extends Controller
             if(!empty($data['price_range'])){
                 $priceRangeURL .='&price='.$data['price_range'];
             }
-            if(request()->is('e-shop.loc/product-grids')){
-                return redirect()->route('product-grids',$catURL.$brandURL.$priceRangeURL.$showURL.$sortByURL);
-            }
-            else{
-                return redirect()->route('product-lists',$catURL.$brandURL.$priceRangeURL.$showURL.$sortByURL);
-            }
+            return redirect()->route('product-grids',$catURL.$brandURL.$priceRangeURL.$showURL.$sortByURL);
+            // if(request()->is('e-shop.loc/product-grids')){
+            //     return redirect()->route('product-grids',$catURL.$brandURL.$priceRangeURL.$showURL.$sortByURL);
+            // }
+            // else{
+            //     return redirect()->route('product-lists',$catURL.$brandURL.$priceRangeURL.$showURL.$sortByURL);
+            // }
     }
     public function productSearch(Request $request){
-        $recent_products=Product::where('status','active')->orderBy('id','DESC')->limit(3)->get();
-        $products=Product::orwhere('title','like','%'.$request->search.'%')
-                    ->orwhere('slug','like','%'.$request->search.'%')
-                    ->orwhere('description','like','%'.$request->search.'%')
-                    ->orwhere('summary','like','%'.$request->search.'%')
-                    ->orwhere('price','like','%'.$request->search.'%')
+       
+        $recent_products=Item::where('status','New')->orderBy('id','DESC')->limit(3)->get();
+        $products=Item::with('images')
+                    ->orwhere('name','like','%'.$request->search.'%')
+                    ->orwhere('list_price','like','%'.$request->search.'%')
                     ->orderBy('id','DESC')
                     ->paginate('9');
-        return view('frontend.pages.product-grids')->with('products',$products)->with('recent_products',$recent_products);
+                    $pagination = $products->appends ( array (
+                        'search' => $request->search 
+                      ) );
+        $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
+        return view('frontend.pages.product-grids')->with('brands',$brands)->with('products',$products)->with('recent_products',$recent_products)->withQuery ( $request->search );
     }
 
     public function productBrand(Request $request){
-        $products=Brand::getProductByBrand($request->slug);
+        $products=Item::with('images')->where('brand_id', $request->slug)
+        ->orderBy('id','DESC')
+        ->paginate('9');
+
         $recent_products=Product::where('status','active')->orderBy('id','DESC')->limit(3)->get();
-        if(request()->is('e-shop.loc/product-grids')){
-            return view('frontend.pages.product-grids')->with('products',$products->products)->with('recent_products',$recent_products);
-        }
-        else{
-            return view('frontend.pages.product-lists')->with('products',$products->products)->with('recent_products',$recent_products);
-        }
+        $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
+        return view('frontend.pages.product-grids')->with('brands',$brands)->with('products',$products)->with('recent_products',$recent_products);
+        // if(request()->is('e-shop.loc/product-grids')){
+        //     return view('frontend.pages.product-grids')->with('products',$products->products)->with('recent_products',$recent_products);
+        // }
+        // else{
+        //     return view('frontend.pages.product-grids')->with('products',$products->products)->with('recent_products',$recent_products);
+        // }
 
     }
     public function productCat(Request $request){
-        $products=Category::getProductByCat($request->slug);
+        
+        $items_ids =  ItemCategory::where('category_id',$request->wps_id)->pluck('item_id')->all();
+        $items_ids = array_unique($items_ids);
+        $items = Item::with('images')->whereIn('wps_id', $items_ids)
+                    ->orderBy('id','DESC')
+                    ->paginate('9');
+        
+        // print_r($items);
+        // die;
         // return $request->slug;
-        $recent_products=Product::where('status','active')->orderBy('id','DESC')->limit(3)->get();
-
-        if(request()->is('e-shop.loc/product-grids')){
-            return view('frontend.pages.product-grids')->with('products',$products->products)->with('recent_products',$recent_products);
-        }
-        else{
-            return view('frontend.pages.product-lists')->with('products',$products->products)->with('recent_products',$recent_products);
-        }
+        $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
+        $recent_products=Item::with('images')->where('status','NEW')->orderBy('id','DESC')->limit(3)->get();
+        return view('frontend.pages.product-grids')->with('brands',$brands)->with('products',$items)->with('recent_products',$recent_products);
+        // if(request()->is('e-shop.loc/product-grids')){
+        //     return view('frontend.pages.product-grids')->with('products',$items)->with('recent_products',$recent_products);
+        // }
+        // else{
+        //     return view('frontend.pages.product-lists')->with('products',$items)->with('recent_products',$recent_products);
+        // }
 
     }
-    public function productSubCat(Request $request){
-        $products=Category::getProductBySubCat($request->sub_slug);
-        // return $products;
-        $recent_products=Product::where('status','active')->orderBy('id','DESC')->limit(3)->get();
+    
+    public function newProductCat(Request $request){
+        $attributevalues = Attributevalue::has('items')->where('attributekey_id',1)->get();
+        $category = Category::where('wps_id',$request->wps_id)->first();
+       
+        return view('frontend.pages.product-types')->with('category',$category)->with('attributevalues',$attributevalues);
+    }
 
-        if(request()->is('e-shop.loc/product-grids')){
-            return view('frontend.pages.product-grids')->with('products',$products->sub_products)->with('recent_products',$recent_products);
-        }
-        else{
-            return view('frontend.pages.product-lists')->with('products',$products->sub_products)->with('recent_products',$recent_products);
-        }
+    
+    public function productTypesByCat(Request $request){
+        $categoryId = $request->cat_id;
+    
+
+        $items = Item::with('images')->whereHas('categories', function ($query) use ($categoryId) {
+            $query->where('categories.wps_id', $categoryId);
+        })->where('product_type', $request->name)->paginate('12');
+        
+        $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
+        $recent_products=Item::with('images')->where('status','NEW')->orderBy('id','DESC')->limit(3)->get();
+        return view('frontend.pages.product-grids')->with('brands',$brands)->with('products',$items)->with('recent_products',$recent_products);
+    }
+    public function productSubCat(Request $request){
+       
+        $items_ids =  ItemCategory::where('category_id',$request->sub_slug)->pluck('item_id')->all();
+        $items_ids = array_unique($items_ids);
+        // print_r($items_ids);
+        // die;
+        $items = Item::with('images')->whereIn('wps_id', $items_ids)
+                    ->orderBy('id','DESC')
+                    ->paginate('9');
+                    $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
+        $recent_products=Item::with('images')->where('status','NEW')->orderBy('id','DESC')->limit(3)->get();
+        return view('frontend.pages.product-grids')->with('brands',$brands)->with('products',$items)->with('recent_products',$recent_products);
+        // if(request()->is('e-shop.loc/product-grids')){
+        //     return view('frontend.pages.product-grids')->with('products',$items)->with('recent_products',$recent_products);
+        // }
+        // else{
+        //     return view('frontend.pages.product-lists')->with('products',$items)->with('recent_products',$recent_products);
+        // }
 
     }
 

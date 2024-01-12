@@ -1,5 +1,5 @@
 @extends('frontend.layouts.master')
-@section('title','E-SHOP || HOME PAGE')
+@section('title','DMC Motorsports || HOME PAGE')
 @section('main-content')
 <!-- Slider Area -->
 @if(count($banners)>0)
@@ -34,50 +34,7 @@
 @endif
 
 <!--/ End Slider Area -->
-<!-- Start Search Area -->
-<section class="search-section section">
-    <div class="container">
-        <div class="row">
-            <form action="{{route('search.items')}}" class="search-vehicle-form" method="POST" >
-                @csrf
-                <div class="form-row">
-                    <div class="form-group col-md-4">
-                        <label for="carMaker">Select Vehicle Maker</label>
-                        <select name="vehicle_maker" formcontrolname="carMaker" class="form-control" id="carMaker">
-                            <option value="">Select Car Maker</option>
-                            
-                            @foreach($vehiclemakes as $wps=>$vehiclemake)
-                            <option value="{{$wps}}">{{$vehiclemake}}</option>
-                            @endforeach
-                            <!-- Add options dynamically if needed -->
-                        </select>
-                    </div>
-        
-                    <div class="form-group col-md-4">
-                        <label for="modelLine">Select Vehicle Model</label>
-                        <select name="vehicle_model" formcontrolname="modelLine" class="form-control" id="modelLine" disabled='disabled'>
-                            <option value="0: null">Select Model Line</option>
-                            <!-- Add options dynamically if needed -->
-                        </select>
-                    </div>
-        
-                    <div class="form-group col-md-2">
-                        <label for="vehicle-year">Select Vehicle Year</label>
-                        <select name="vehicle_year" formcontrolname="vehicle-year" class="form-control" id="vehicle-year"  disabled='disabled'>
-                            <option value="0: null">Select Year</option>
-                            <!-- Add options dynamically if needed -->
-                        </select>
-                    </div>
 
-                </div>
-                <div class="form-group">
-                    <button type="submit" class="btn btn-block btn-primary" id="search-items" disabled='disabled'>Search Items</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</section>
-<!--/ End Search Area -->
 <!-- Start Small Banner  -->
 <section class="small-banner section">
     <div class="container-fluid">
@@ -105,14 +62,14 @@
                                         @endphp
                                         @else
                                         @php
-                                        $fimg_url = 'backend/img/thumbnail-default.jpg';
+                                        $fimg_url = asset('backend/img/thumbnail-default.jpg');
                                         @endphp
                                          @endif
                                     <img src="{{$fimg_url}}" alt="#">
                                     @endif
                                 <div class="content">
                                     <h3>{{$cat->title}}</h3>
-                                        <a href="{{route('product-cat',$cat->slug)}}">Discover Now</a>
+                                        <a href="{{route('new-product-cat',$cat->wps_id)}}">Discover Now</a>
                                 </div>
                             </div>
                         </div>
@@ -124,7 +81,7 @@
     </div>
 </section>
 <!-- End Small Banner -->
-
+@include('frontend.partials.search')
 <!-- End Midium Banner -->
 <!-- Start Shop Home List  -->
 <section class="shop-home-list section">
@@ -163,18 +120,18 @@
                                                 @endphp
                                                 @else
                                                 @php
-                                                $fimg_url = 'backend/img/thumbnail-default.jpg';
+                                                $fimg_url = asset('backend/img/thumbnail-default.jpg');
                                                 @endphp
                                                  @endif
                                             <img src="{{$fimg_url}}" alt="#">
                                             @endif
-                                        <a href="{{route('add-to-cart',$cat->wps_id)}}" class="buy"><i class="fa fa-eye"></i></a>
+                                        <a href="{{route('new-product-cat',$cat->wps_id)}}" class="buy"><i class="fa fa-eye"></i></a>
                                        
                                     </div>
                                 </div>
                                 <div class="col-lg-6 col-md-6 col-12 no-padding">
                                     <div class="content">
-                                        <h4 class="title"><a href="{{route('add-to-cart',$cat->wps_id)}}">{{$cat->title}}</a></h4>
+                                        <h4 class="title"><a href="{{route('new-product-cat',$cat->wps_id)}}">{{$cat->title}}</a></h4>
                                         {{-- <p class="price with-discount">${{number_format($product->discount,2)}}</p> --}}
                                     </div>
                                 </div>
@@ -556,62 +513,6 @@
             });
         });
     </script>
-    <script>
-        // When the car maker dropdown changes
-        $('#carMaker').on('change', function () {
-            var carMakerId = $(this).val();
     
-            // Make an AJAX request to fetch the models based on the selected car maker
-            $.ajax({
-                url: '/get-vehicle-models', // Replace with your actual endpoint
-                type: 'GET',
-                data: { carMakerId: carMakerId },
-                success: function (data) {
-                    // Update the model dropdown options
-                    //$('#modelLine').prop('disabled', false);
-                    $('#modelLine').niceSelect('destroy');
-                    $('#modelLine').html('<option value="0: null">Select Model Line</option>' + data.options);
-                   
-                    // Enable the model dropdown
-                    $('#modelLine').prop('disabled', false);
-                    
-                    $('#modelLine').niceSelect();
-                   // $('#modelLine').removeAttr('disabled');
-                },
-                error: function (error) {
-                    console.error('Error fetching data:', error);
-                }
-            });
-        });
-        
-
-         // When the car maker dropdown changes
-         $('#modelLine').on('change', function () {
-            var carModelId = $(this).val();
-    
-            // Make an AJAX request to fetch the models based on the selected car maker
-            $.ajax({
-                url: '/get-vehicle-model-years', // Replace with your actual endpoint
-                type: 'GET',
-                data: { carModelId: carModelId },
-                success: function (data) {
-                    // Update the model dropdown options
-                    //$('#modelLine').prop('disabled', false);
-                    $('#vehicle-year').niceSelect('destroy');
-                    $('#vehicle-year').html('<option value="0: null">Select Vehicle Year</option>' + data.options);
-                   
-                    // Enable the model dropdown
-                    $('#vehicle-year').prop('disabled', false);
-                    $('#search-items').prop('disabled', false);
-                    
-                    $('#vehicle-year').niceSelect();
-                   // $('#modelLine').removeAttr('disabled');
-                },
-                error: function (error) {
-                    console.error('Error fetching data:', error);
-                }
-            });
-        });
-    </script>
 
 @endpush

@@ -34,28 +34,23 @@
                                     <ul class="categor-list">
 										@php
 											// $category = new Category();
-											$menu=App\Models\Category::getAllParentWithChild();
+											$menu=App\Models\Category::has('items')->where('status','active')->where('is_parent',1)->orderBy('title','ASC')->get();
 										@endphp
 										@if($menu)
 										<li>
 											@foreach($menu as $cat_info)
-													@if($cat_info->child_cat->count()>0)
-														<li><a href="{{route('product-cat',$cat_info->slug)}}">{{$cat_info->title}}</a>
-															<ul>
-																@foreach($cat_info->child_cat as $sub_menu)
-																	<li><a href="{{route('product-sub-cat',[$cat_info->slug,$sub_menu->slug])}}">{{$sub_menu->title}}</a></li>
-																@endforeach
-															</ul>
+                                          
+														<li><a href="{{route('new-product-cat',$cat_info->wps_id)}}">{{$cat_info->title}}</a>
+															
 														</li>
-													@else
-														<li><a href="{{route('product-cat',$cat_info->slug)}}">{{$cat_info->title}}</a></li>
-													@endif
+                                                   
+													
 											@endforeach
 										</li>
 										@endif
                                         {{-- @foreach(Helper::productCategoryList('products') as $cat)
                                             @if($cat->is_parent==1)
-												<li><a href="{{route('product-cat',$cat->slug)}}">{{$cat->title}}</a></li>
+												<li><a href="{{route('product-cat',$cat->wps_id)}}">{{$cat->title}}</a></li>
 											@endif
                                         @endforeach --}}
                                     </ul>
@@ -85,9 +80,9 @@
                                     </div>
                                     <!--/ End Shop By Price -->
                                 <!-- Single Widget -->
-                                <div class="single-widget recent-post">
-                                    <h3 class="title">Recent post</h3>
-                                    {{-- {{dd($recent_products)}} --}}
+                              {{--  <div class="single-widget recent-post">
+                                    <h3 class="title">Recent Items</h3>
+                                   
                                     @foreach($recent_products as $product)
                                         <!-- Single Post -->
                                         @php
@@ -108,25 +103,25 @@
                                         </div>
                                         <!-- End Single Post -->
                                     @endforeach
-                                </div>
+                                </div>--}}
                                 <!--/ End Single Widget -->
                                 <!-- Single Widget -->
-                                <div class="single-widget category">
+                               {{-- <div class="single-widget category">
                                     <h3 class="title">Brands</h3>
                                     <ul class="categor-list">
                                         @php
-                                            $brands=DB::table('brands')->orderBy('title','ASC')->where('status','active')->get();
+                                          
                                         @endphp
                                         @foreach($brands as $brand)
-                                            <li><a href="{{route('product-brand',$brand->slug)}}">{{$brand->title}}</a></li>
+                                            <li><a href="{{route('product-brand',$brand->wps_id)}}">{{$brand->title}}</a></li>
                                         @endforeach
                                     </ul>
-                                </div>
+                                </div>--}}
                                 <!--/ End Single Widget -->
                         </div>
                     </div>
                     <div class="col-lg-9 col-md-8 col-12">
-                        <div class="row">
+                       {{-- <div class="row">
                             <div class="col-12">
                                 <!-- Shop Top -->
                                 <div class="shop-top">
@@ -159,7 +154,7 @@
                                 </div>
                                 <!--/ End Shop Top -->
                             </div>
-                        </div>
+                        </div>--}}
                         <div class="row">
                             {{-- {{$products}} --}}
                             @if(count($products)>0)
@@ -177,12 +172,12 @@
                                                         // // dd($photo);
                                                         $f_item_image = $product->images[0];
                                           // print_r($f_item_image);
-                                            $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$f_item_image->filename;
+                                                $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$f_item_image->filename;
                                                         
                                                     @endphp
                                                     @else
                                                     @php
-                                                    $fimg_url = 'backend/img/thumbnail-default.jpg';
+                                                    $fimg_url = asset('backend/img/thumbnail-default.jpg');
                                                     @endphp
                                                      @endif
                                                     <img class="default-img" src="{{$fimg_url}}" alt="{{$fimg_url}}">
@@ -220,9 +215,10 @@
 
                         </div>
                         <div class="row">
-                            <div class="col-md-12 justify-content-center d-flex">
-                                {{$products->appends($_GET)->links()}}
-                            </div>
+                        <div class="d-flex justify-content-center">
+                                {{$products->appends($_GET)->links('vendor.pagination.bootstrap-4')}}
+							</div>
+                            
                           </div>
 
                     </div>

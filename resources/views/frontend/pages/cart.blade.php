@@ -42,11 +42,12 @@
 									@foreach(Helper::getAllProductFromCart() as $key=>$cart)
 										<tr>
 											@php
-											$photo=explode(',',$cart->product['photo']);
+										//	$photo=explode(',',$cart->product['photo']);
+											$fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$cart->product->images[0]->filename;
 											@endphp
-											<td class="image" data-title="No"><img src="{{$photo[0]}}" alt="{{$photo[0]}}"></td>
+											<td class="image" data-title="No"><img src="{{$fimg_url}}" alt="{{$fimg_url}}"></td>
 											<td class="product-des" data-title="Description">
-												<p class="product-name"><a href="{{route('product-detail',$cart->product['slug'])}}" target="_blank">{{$cart->product['title']}}</a></p>
+												<p class="product-name"><a href="{{route('product-detail',$cart->product['slug'])}}" target="_blank">{{$cart->product['name']}}</a></p>
 												<p class="product-des">{!!($cart['summary']) !!}</p>
 											</td>
 											<td class="price" data-title="Price"><span>${{number_format($cart['price'],2)}}</span></td>

@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Cart;
+use App\Models\Wishlist;
+use Auth;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Shipping;
 use App\User;
 use PDF;
@@ -12,6 +15,7 @@ use Notification;
 use Helper;
 use Illuminate\Support\Str;
 use App\Notifications\StatusNotification;
+use Illuminate\Support\Facades\Hash;
 
 class OrderController extends Controller
 {
@@ -44,54 +48,81 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request,[
-            'first_name'=>'string|required',
-            'last_name'=>'string|required',
-            'address1'=>'string|required',
-            'address2'=>'string|nullable',
-            'coupon'=>'nullable|numeric',
-            'phone'=>'numeric|required',
-            'post_code'=>'string|nullable',
-            'email'=>'string|required'
-        ]);
-        // return $request->all();
-
-        if(empty(Cart::where('user_id',auth()->user()->id)->where('order_id',null)->first())){
-            request()->session()->flash('error','Cart is Empty !');
-            return back();
+       
+        if (auth()->guest()) {
+            $this->validate($request,[
+                'first_name'=>'string|required',
+                'last_name'=>'string|required',
+                'address1'=>'string|required',
+                'address2'=>'string|nullable',
+                'coupon'=>'nullable|numeric',
+                'phone'=>'numeric|required',
+                'post_code'=>'string|nullable',
+                'email'=>'string|required',
+                'password'=>'string|required|min:8'
+            ]);
+        }else{
+            $this->validate($request,[
+                'first_name'=>'string|required',
+                'last_name'=>'string|required',
+                'address1'=>'string|required',
+                'address2'=>'string|nullable',
+                'coupon'=>'nullable|numeric',
+                'phone'=>'numeric|required',
+                'post_code'=>'string|nullable',
+                'email'=>'string|required'
+            ]);
         }
-        // $cart=Cart::get();
-        // // return $cart;
-        // $cart_index='ORD-'.strtoupper(uniqid());
-        // $sub_total=0;
-        // foreach($cart as $cart_item){
-        //     $sub_total+=$cart_item['amount'];
-        //     $data=array(
-        //         'cart_id'=>$cart_index,
-        //         'user_id'=>$request->user()->id,
-        //         'product_id'=>$cart_item['id'],
-        //         'quantity'=>$cart_item['quantity'],
-        //         'amount'=>$cart_item['amount'],
-        //         'status'=>'new',
-        //         'price'=>$cart_item['price'],
-        //     );
-
-        //     $cart=new Cart();
-        //     $cart->fill($data);
-        //     $cart->save();
-        // }
-
-        // $total_prod=0;
-        // if(session('cart')){
-        //         foreach(session('cart') as $cart_items){
-        //             $total_prod+=$cart_items['quantity'];
-        //         }
-        // }
+        // dd($request->all());
+        if (auth()->check()) {
+            if(empty(Cart::where('user_id',auth()->user()->id)->where('order_id',null)->first())){
+                request()->session()->flash('error','Cart is Empty !');
+                return back();
+            }
+            }else{
+                if(empty(Cart::where('guest_id',$request->session()->get('guest_id'))->where('order_id',null)->first())){
+                    request()->session()->flash('error','Cart is Empty !');
+                    return back();
+                }
+            }
+        
+       
+        if (auth()->guest()) {
+            $new_user = User::create([
+                'name' => $request->first_name.' '.$request->last_name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+            Auth::login($new_user);
+            Cart::where('guest_id', '=', $request->session()->get('guest_id'))
+            ->update([
+                'user_id' => auth()->user()->id,
+                // Add more columns as needed
+            ]);
+            Wishlist::where('guest_id', '=', $request->session()->get('guest_id'))
+            ->update([
+                'user_id' => auth()->user()->id,
+                // Add more columns as needed
+            ]);
+            $request->session()->forget('guest_id');
+            // Order::where('guest_id', '=', $request->session()->get('guest_id'))
+            // ->update([
+            //     'user_id' => auth()->user()->id,
+            //     // Add more columns as needed
+            // ]);
+        }
 
         $order=new Order();
         $order_data=$request->all();
         $order_data['order_number']='ORD-'.strtoupper(Str::random(10));
-        $order_data['user_id']=$request->user()->id;
+        
+       
+
+        if (auth()->check()) {
+            $order_data['user_id']= auth()->user()->id;
+            }else{
+                $order_data['guest_id']=$request->session()->get('guest_id');
+            }
         $order_data['shipping_id']=$request->shipping;
         $shipping=Shipping::where('id',$order_data['shipping_id'])->pluck('price');
         // return session('coupon')['value'];
@@ -118,9 +149,12 @@ class OrderController extends Controller
         }
         // return $order_data['total_amount'];
         $order_data['status']="new";
-        if(request('payment_method')=='paypal'){
+        if($request->payment_method=='paypal'){
             $order_data['payment_method']='paypal';
-            $order_data['payment_status']='paid';
+            $order_data['payment_status']='unpaid';
+        }else if($request->payment_method=='stripe'){
+            $order_data['payment_method']='stripe';
+            $order_data['payment_status']='unpaid';
         }
         else{
             $order_data['payment_method']='cod';
@@ -129,6 +163,11 @@ class OrderController extends Controller
         $order->fill($order_data);
         $status=$order->save();
         if($order)
+
+        
+       
+
+        
         // dd($order->id);
         $users=User::where('role','admin')->first();
         $details=[
@@ -136,16 +175,33 @@ class OrderController extends Controller
             'actionURL'=>route('order.show',$order->id),
             'fas'=>'fa-file-alt'
         ];
+        
         Notification::send($users, new StatusNotification($details));
-        if(request('payment_method')=='paypal'){
-            return redirect()->route('payment')->with(['id'=>$order->id]);
+        if($request->payment_method=='paypal'){
+            return redirect()->route('payment',$order->id);
+        }else if($request->payment_method=='stripe'){
+           
+            return redirect()->route('payment.stripe.get',$order->id);
         }
         else{
             session()->forget('cart');
             session()->forget('coupon');
         }
-        Cart::where('user_id', auth()->user()->id)->where('order_id', null)->update(['order_id' => $order->id]);
-
+        if (auth()->check()) {
+            Cart::where('user_id', auth()->user()->id)->where('order_id', null)->update(['order_id' => $order->id]);
+            }else{
+                Cart::where('guest_id', $request->session()->get('guest_id'))->where('order_id', null)->update(['order_id' => $order->id]);
+               
+            }
+            $order_items = Cart::where('order_id', $order->id)->get();
+            foreach($order_items as $order_item){
+                
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'item_id' => $order_item->product_id,
+                ]);
+            }
+       
         // dd($users);        
         request()->session()->flash('success','Your product successfully placed in order');
         return redirect()->route('home');
@@ -191,14 +247,14 @@ class OrderController extends Controller
         ]);
         $data=$request->all();
         // return $request->status;
-        if($request->status=='delivered'){
-            foreach($order->cart as $cart){
-                $product=$cart->product;
-                // return $product;
-                $product->stock -=$cart->quantity;
-                $product->save();
-            }
-        }
+        // if($request->status=='delivered'){
+        //     foreach($order->cart as $cart){
+        //         $product=$cart->product;
+        //         // return $product;
+        //         $product->stock -=$cart->quantity;
+        //         $product->save();
+        //     }
+        // }
         $status=$order->fill($data)->save();
         if($status){
             request()->session()->flash('success','Successfully updated order');
@@ -217,8 +273,10 @@ class OrderController extends Controller
      */
     public function destroy($id)
     {
+        
         $order=Order::find($id);
         if($order){
+            Cart::where('order_id', $id)->delete();
             $status=$order->delete();
             if($status){
                 request()->session()->flash('success','Order Successfully deleted');
@@ -272,6 +330,7 @@ class OrderController extends Controller
     // PDF generate
     public function pdf(Request $request){
         $order=Order::getAllOrder($request->id);
+        
         // return $order;
         $file_name=$order->order_number.'-'.$order->first_name.'.pdf';
         // return $file_name;

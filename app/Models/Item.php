@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Item extends Model
 {
     protected $fillable=[
+        'id',
         'wps_id',
         'brand_id',
         'country_id',
@@ -42,6 +43,9 @@ class Item extends Model
 
     protected $primaryKey = 'wps_id';
 
+     public static function getAllProduct(){
+        return Item::with(['cat_info','sub_cat_info'])->orderBy('id','desc')->paginate(10);
+    }
     public function images(){
         // return $this->hasMany('');
         //  return $this->belongsToMany('App\Models\Image', 'item_images');
@@ -61,6 +65,10 @@ class Item extends Model
     {
         return $this->belongsToMany('App\Models\Category', 'item_categories', 'item_id', 'category_id');
     }
+    public function attributevalues()
+    {
+        return $this->belongsToMany(Attributevalue::class, 'item_attributevalues', 'item_id', 'attributevalue_id');
+    }
     public function vehicles()
     {
         return $this->belongsToMany('App\Models\Vehicle', 'item_vehicles', 'item_id', 'vehicle_id'); // Specify a different alias for the pivot table
@@ -77,8 +85,12 @@ class Item extends Model
         return $this->belongsTo('App\Models\Product', 'product_id', 'wps_id');
      }
      public function inventory(){
-        return $this->hasMany('App\Models\Inventory', 'item_id', 'wps_id');
+        return $this->hasOne('App\Models\Inventory', 'item_id', 'wps_id');
      }
+     public function itemCategories()
+        {
+            return $this->hasMany(ItemCategory::class);
+        }
      
 
      

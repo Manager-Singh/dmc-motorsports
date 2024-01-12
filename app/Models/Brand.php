@@ -2,6 +2,7 @@
 
 namespace App\Models;
 use App\Models\Product;
+use App\Models\Item;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -13,14 +14,16 @@ class Brand extends Model
     //     return Product::where('brand_id',$id)->paginate(10);
     // }
     public function products(){
-        return $this->hasMany('App\Models\Product','brand_id','id')->where('status','active');
+        return $this->hasMany('App\Models\Item','brand_id','wps_id');
     }
     public static function getProductByBrand($slug){
         // dd($slug);
-        return Brand::with('products')->where('slug',$slug)->first();
+        return Item::where('wps_id',$slug)->get();
         // return Product::where('cat_id',$id)->where('child_cat_id',null)->paginate(10);
     }
-
+    public function items(){
+        return $this->hasMany('App\Models\Item','brand_id','wps_id');
+    }
     public static function createRecord($data)
     {
      

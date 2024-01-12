@@ -79,7 +79,9 @@
             @endforeach
           </tbody>
         </table>
-        <span style="float:right">{{$brands->links()}}</span>
+        <div class="d-flex justify-content-center">
+          {{ $brands->links('vendor.pagination.bootstrap-4') }}
+      </div>
         @else
           <h6 class="text-center">No brands found!!! Please create brand</h6>
         @endif

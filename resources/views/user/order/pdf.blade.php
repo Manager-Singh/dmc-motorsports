@@ -70,14 +70,19 @@
   }
 </style>
   <div class="invoice-header">
-    <div class="float-left site-logo">
-      <img src="{{asset('backend/img/logo.png')}}" alt="">
-    </div>
+  @php
+                                $settings=DB::table('settings')->get();
+                                
+                            @endphp
+  <div class="float-left site-logo">
+   
+      <img src="https://dmc-motorsports.com/public/storage/photos/1/Logo/dmc-logo.png" alt="">
+    </div> 
     <div class="float-right site-address">
-      <h4>{{env('APP_NAME')}}</h4>
-      <p>{{env('APP_ADDRESS')}}</p>
-      <p>Phone: <a href="tel:{{env('APP_PHONE')}}">{{env('APP_PHONE')}}</a></p>
-      <p>Email: <a href="mailto:{{env('APP_EMAIL')}}">{{env('APP_EMAIL')}}</a></p>
+      <h4>{{env('APP_NAME','DMC Motorsports')}}</h4>
+      <p>@foreach($settings as $data) {{$data->address}} @endforeach</p>
+      <p>Phone: <a href="tel:{{env('APP_PHONE')}}">@foreach($settings as $data) {{$data->phone}} @endforeach</a></p>
+      <p>Email: <a href="mailto:{{env('APP_EMAIL')}}">@foreach($settings as $data) {{$data->email}} @endforeach</a></p>
     </div>
     <div class="clearfix"></div>
   </div>
@@ -120,12 +125,12 @@
       <tbody>
       @foreach($order->cart_info as $cart)
       @php 
-        $product=DB::table('products')->select('title')->where('id',$cart->product_id)->get();
+        $product=DB::table('items')->select('name')->where('id',$cart->product_id)->get();
       @endphp
         <tr>
           <td><span>
               @foreach($product as $pro)
-                {{$pro->title}}
+                {{$pro->name}}
               @endforeach
             </span></td>
           <td>x{{$cart->quantity}}</td>
@@ -146,11 +151,11 @@
           <th scope="col"><span>-{{$order->coupon->discount(Helper::orderPrice($order->id, $order->user->id))}}{{Helper::base_currency()}}</span></th>
         </tr>
       @endif --}}
-        <tr>
+      {{-- <tr>
           <th scope="col" class="empty"></th>
           <th scope="col" class="text-right ">Shipping:</th>
           <th><span>${{number_format($order->delivery_charge,2)}}</span></th>
-        </tr>
+        </tr>--}}
         <tr>
           <th scope="col" class="empty"></th>
           <th scope="col" class="text-right">Total:</th>

@@ -22,14 +22,14 @@ class Category extends Model
         return Category::whereIn('id',$cat_id)->update(['is_parent'=>1]);
     }
     public static function getChildByParentID($id){
-        return Category::where('parent_id',$id)->orderBy('id','ASC')->pluck('title','id');
+        return Category::where('parent_id',$id)->orderBy('wps_id','ASC')->pluck('title','wps_id');
     }
 
     public function child_cat(){
         return $this->hasMany('App\Models\Category','parent_id','wps_id')->where('status','active');
     }
     public static function getAllParentWithChild(){
-        return Category::with('child_cat')->where('is_parent',1)->where('status','active')->orderBy('title','ASC')->get();
+        return Category::has('items')->with('child_cat')->where('is_parent',1)->where('status','active')->orderBy('title','ASC')->get();
     }
     public function products(){
         return $this->hasMany('App\Models\Product','cat_id','id')->where('status','active');
@@ -39,13 +39,13 @@ class Category extends Model
         return $this->hasMany('App\Models\Product','child_cat_id','id')->where('status','active');
     }
     public static function getProductByCat($slug){
-        // dd($slug);
-        return Category::with('products')->where('slug',$slug)->first();
+        dd($slug);
+        // return Category::with('items')->where('wps_id',$slug)->first();
         // return Product::where('cat_id',$id)->where('child_cat_id',null)->paginate(10);
     }
     public static function getProductBySubCat($slug){
         // return $slug;
-        return Category::with('sub_products')->where('slug',$slug)->first();
+        return Category::with('sub_products')->where('wps_id',$slug)->first();
     }
     public static function countActiveCategory(){
         $data=Category::where('status','active')->count();

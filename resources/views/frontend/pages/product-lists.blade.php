@@ -39,23 +39,33 @@
 										@if($menu)
 										<li>
 											@foreach($menu as $cat_info)
+											@php
+
+                                            $childWpsIds = $cat_info->child_cat->pluck('wps_id');
+                                            $count_sub_catmain=DB::table('item_categories')->whereIn('category_id',$childWpsIds)->count();
+
+                                            @endphp
+													
 													@if($cat_info->child_cat->count()>0)
-														<li><a href="{{route('product-cat',$cat_info->slug)}}">{{$cat_info->title}}</a>
+													@if($count_sub_catmain>0)
+														<li><a href="{{route('product-cat',$cat_info->wps_id)}}">{{$cat_info->title}}</a>
 															<ul>
 																@foreach($cat_info->child_cat as $sub_menu)
-																	<li><a href="{{route('product-sub-cat',[$cat_info->slug,$sub_menu->slug])}}">{{$sub_menu->title}}</a></li>
+																	<li><a href="{{route('product-sub-cat',[$cat_info->wps_id,$sub_menu->wps_id])}}">{{$sub_menu->title}}</a></li>
 																@endforeach
 															</ul>
 														</li>
+														@endif
 													@else
-														<li><a href="{{route('product-cat',$cat_info->slug)}}">{{$cat_info->title}}</a></li>
+														<li><a href="{{route('product-cat',$cat_info->wps_id)}}">{{$cat_info->title}}</a></li>
 													@endif
+													
 											@endforeach
 										</li>
 										@endif
                                         {{-- @foreach(Helper::productCategoryList('products') as $cat)
                                             @if($cat->is_parent==1)
-												<li><a href="{{route('product-cat',$cat->slug)}}">{{$cat->title}}</a></li>
+												<li><a href="{{route('product-cat',$cat->wps_id)}}">{{$cat->title}}</a></li>
 											@endif
                                         @endforeach --}}
                                     </ul>
@@ -188,10 +198,24 @@
 														<div class="product-img">
 															<a href="{{route('product-detail',$product->slug)}}">
 															@php 
-																$photo=explode(',',$product->photo);
+																//$photo=explode(',',$product->photo);
 															@endphp
-															<img class="default-img" src="{{$photo[0]}}" alt="{{$photo[0]}}">
-															<img class="hover-img" src="{{$photo[0]}}" alt="{{$photo[0]}}">
+															@if(count($product->images)>0)
+                                                    @php
+                                                        // $photo=explode(',',$cat->photo);
+                                                        // // dd($photo);
+                                                        $f_item_image = $product->images[0];
+                                          // print_r($f_item_image);
+                                                $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$f_item_image->filename;
+                                                        
+                                                    @endphp
+                                                    @else
+                                                    @php
+                                                    $fimg_url = asset('backend/img/thumbnail-default.jpg');
+                                                    @endphp
+                                                     @endif
+															<img class="default-img" src="{{$fimg_url}}" alt="{{$fimg_url}}">
+															<img class="hover-img" src="{{$fimg_url}}" alt="{{$fimg_url}}">
 															</a>
 															<div class="button-head">
 																<div class="product-action">
@@ -210,12 +234,12 @@
 														<div class="product-content">
 															<div class="product-price">
 																@php
-																	$after_discount=($product->price-($product->price*$product->discount)/100);
+																	$after_discount=($product->list_price-($product->list_price*$product->discount)/100);
 																@endphp
 																<span>${{number_format($after_discount,2)}}</span>
-																<del>${{number_format($product->price,2)}}</del>
+																<del>${{number_format($product->list_price,2)}}</del>
 															</div>
-															<h3 class="title"><a href="{{route('product-detail',$product->slug)}}">{{$product->title}}</a></h3>
+															<h3 class="title"><a href="{{route('product-detail',$product->slug)}}">{{$product->name}}</a></h3>
 														{{-- <p>{!! html_entity_decode($product->summary) !!}</p> --}}
 														</div>
 														<p class="des pt-2">{!! html_entity_decode($product->summary) !!}</p>
@@ -231,9 +255,10 @@
 								@endif
 							</div>
 							 <div class="row">
-                            <div class="col-md-12 justify-content-center d-flex">
-                                {{-- {{$products->appends($_GET)->links()}}  --}}
-                            </div>
+                            <div class="d-flex justify-content-center">
+                                {{$products->appends($_GET)->links('vendor.pagination.bootstrap-4')}}
+							</div>
+							
                           </div>
 						</div>
 					</div>

@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Attributekey extends Model
 {
     protected $fillable=['wps_id','name'];
+    protected $primaryKey = 'wps_id';
+
+    public function attributevalues(){
+        return $this->hasMany('App\Models\Attributevalue','childattributekey_id_cat_id','wps_id');
+    }
     public static function createRecord($data)
     {
        

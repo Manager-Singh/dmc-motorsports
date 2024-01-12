@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Models\Item;
 use App\Models\Category;
 use App\Models\Brand;
 
@@ -18,7 +19,10 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products=Product::getAllProduct();
+        $products= Item::with(['images','brand','categories'])->paginate(10);
+
+        // print_r($products);
+        // die;
         // return $products;
         return view('backend.product.index')->with('products',$products);
     }
@@ -109,14 +113,15 @@ class ProductController extends Controller
      */
     public function edit($id)
     {
+       
         $brand=Brand::get();
-        $product=Product::findOrFail($id);
         $category=Category::where('is_parent',1)->get();
-        $items=Product::where('id',$id)->get();
+        $items=Item::with('product','images','inventory')->where('wps_id',$id)->first();
+     
         // return $items;
-        return view('backend.product.edit')->with('product',$product)
+        return view('backend.product.edit')->with('product',$items)
                     ->with('brands',$brand)
-                    ->with('categories',$category)->with('items',$items);
+                    ->with('categories',$category);
     }
 
     /**

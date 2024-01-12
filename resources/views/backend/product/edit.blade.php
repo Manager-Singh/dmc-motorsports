@@ -5,94 +5,36 @@
 <div class="card">
     <h5 class="card-header">Edit Product</h5>
     <div class="card-body">
-      <form method="post" action="{{route('product.update',$product->id)}}">
+      <form method="post" action="{{route('product.update',$product->wps_id)}}">
         @csrf 
         @method('PATCH')
         <div class="form-group">
           <label for="inputTitle" class="col-form-label">Title <span class="text-danger">*</span></label>
-          <input id="inputTitle" type="text" name="title" placeholder="Enter title"  value="{{$product->title}}" class="form-control">
+          <input id="inputTitle" type="text" name="name" placeholder="Enter name"  value="{{$product->name}}" class="form-control">
           @error('title')
           <span class="text-danger">{{$message}}</span>
           @enderror
         </div>
 
-        <div class="form-group">
-          <label for="summary" class="col-form-label">Summary <span class="text-danger">*</span></label>
-          <textarea class="form-control" id="summary" name="summary">{{$product->summary}}</textarea>
-          @error('summary')
-          <span class="text-danger">{{$message}}</span>
-          @enderror
-        </div>
 
         <div class="form-group">
           <label for="description" class="col-form-label">Description</label>
-          <textarea class="form-control" id="description" name="description">{{$product->description}}</textarea>
+          <input type="hidden" name="product_wps_id" value="{{$product->product->wps_id}}">
+          <textarea class="form-control" id="description" name="description">{{$product->product->description}}</textarea>
           @error('description')
           <span class="text-danger">{{$message}}</span>
           @enderror
         </div>
 
-
         <div class="form-group">
-          <label for="is_featured">Is Featured</label><br>
-          <input type="checkbox" name='is_featured' id='is_featured' value='{{$product->is_featured}}' {{(($product->is_featured) ? 'checked' : '')}}> Yes                        
-        </div>
-              {{-- {{$categories}} --}}
-
-        <div class="form-group">
-          <label for="cat_id">Category <span class="text-danger">*</span></label>
-          <select name="cat_id" id="cat_id" class="form-control">
-              <option value="">--Select any category--</option>
-              @foreach($categories as $key=>$cat_data)
-                  <option value='{{$cat_data->id}}' {{(($product->cat_id==$cat_data->id)? 'selected' : '')}}>{{$cat_data->title}}</option>
-              @endforeach
-          </select>
-        </div>
-        @php 
-          $sub_cat_info=DB::table('categories')->select('title')->where('id',$product->child_cat_id)->get();
-        // dd($sub_cat_info);
-
-        @endphp
-        {{-- {{$product->child_cat_id}} --}}
-        <div class="form-group {{(($product->child_cat_id)? '' : 'd-none')}}" id="child_cat_div">
-          <label for="child_cat_id">Sub Category</label>
-          <select name="child_cat_id" id="child_cat_id" class="form-control">
-              <option value="">--Select any sub category--</option>
-              
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="price" class="col-form-label">Price(NRS) <span class="text-danger">*</span></label>
-          <input id="price" type="number" name="price" placeholder="Enter price"  value="{{$product->price}}" class="form-control">
+          <label for="price" class="col-form-label">Price(USD) <span class="text-danger">*</span></label>
+          <input id="price" type="number" name="price" placeholder="Enter price"  value="{{$product->list_price}}" class="form-control">
           @error('price')
           <span class="text-danger">{{$message}}</span>
           @enderror
         </div>
 
-        <div class="form-group">
-          <label for="discount" class="col-form-label">Discount(%)</label>
-          <input id="discount" type="number" name="discount" min="0" max="100" placeholder="Enter discount"  value="{{$product->discount}}" class="form-control">
-          @error('discount')
-          <span class="text-danger">{{$message}}</span>
-          @enderror
-        </div>
-        <div class="form-group">
-          <label for="size">Size</label>
-          <select name="size[]" class="form-control selectpicker"  multiple data-live-search="true">
-              <option value="">--Select any size--</option>
-              @foreach($items as $item)              
-                @php 
-                $data=explode(',',$item->size);
-                // dd($data);
-                @endphp
-              <option value="S"  @if( in_array( "S",$data ) ) selected @endif>Small</option>
-              <option value="M"  @if( in_array( "M",$data ) ) selected @endif>Medium</option>
-              <option value="L"  @if( in_array( "L",$data ) ) selected @endif>Large</option>
-              <option value="XL"  @if( in_array( "XL",$data ) ) selected @endif>Extra Large</option>
-              @endforeach
-          </select>
-        </div>
+       
         <div class="form-group">
           <label for="brand_id">Brand</label>
           <select name="brand_id" class="form-control">
@@ -103,44 +45,36 @@
           </select>
         </div>
 
-        <div class="form-group">
-          <label for="condition">Condition</label>
-          <select name="condition" class="form-control">
-              <option value="">--Select Condition--</option>
-              <option value="default" {{(($product->condition=='default')? 'selected':'')}}>Default</option>
-              <option value="new" {{(($product->condition=='new')? 'selected':'')}}>New</option>
-              <option value="hot" {{(($product->condition=='hot')? 'selected':'')}}>Hot</option>
-          </select>
-        </div>
 
         <div class="form-group">
-          <label for="stock">Quantity <span class="text-danger">*</span></label>
-          <input id="quantity" type="number" name="stock" min="0" placeholder="Enter quantity"  value="{{$product->stock}}" class="form-control">
+          <label for="stock">Inventory <span class="text-danger">*</span></label>
+          <input id="quantity" type="number" name="stock" min="0" placeholder="Enter inventory"  value="{{$product->inventory->total}}" class="form-control">
           @error('stock')
           <span class="text-danger">{{$message}}</span>
           @enderror
         </div>
         <div class="form-group">
           <label for="inputPhoto" class="col-form-label">Photo <span class="text-danger">*</span></label>
-          <div class="input-group">
-              <span class="input-group-btn">
-                  <a id="lfm" data-input="thumbnail" data-preview="holder" class="btn btn-primary text-white">
-                  <i class="fas fa-image"></i> Choose
-                  </a>
-              </span>
-          <input id="thumbnail" class="form-control" type="text" name="photo" value="{{$product->photo}}">
+          @foreach($product->images as $image)
+          @php
+          $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$image->filename;
+          @endphp
+          <img class="default-img" src="{{$fimg_url}}" alt="{{$fimg_url}}" with=400 height=200>
+          @endforeach
         </div>
-        <div id="holder" style="margin-top:15px;max-height:100px;"></div>
-          @error('photo')
-          <span class="text-danger">{{$message}}</span>
-          @enderror
-        </div>
-        
+     
         <div class="form-group">
           <label for="status" class="col-form-label">Status <span class="text-danger">*</span></label>
           <select name="status" class="form-control">
-            <option value="active" {{(($product->status=='active')? 'selected' : '')}}>Active</option>
-            <option value="inactive" {{(($product->status=='inactive')? 'selected' : '')}}>Inactive</option>
+            <option value="STK" {{(($product->status=='STK')? 'selected' : '')}}>STANDARD STOCKING ITEM</option>
+            <option value="SPEC" {{(($product->status=='SPEC')? 'selected' : '')}}>SPECIAL ORDER</option>
+            <option value="PRE" {{(($product->status=='PRE')? 'selected' : '')}}>PRE -RELEASE ITEM</option>
+            <option value="NEW" {{(($product->status=='NEW')? 'selected' : '')}}>NEW ITEM</option>
+            <option value="DIR" {{(($product->status=='DIR')? 'selected' : '')}}>DIRECT SHIP FROM VENDOR</option>
+            <option value="DSC" {{(($product->status=='DSC')? 'selected' : '')}}>DISCONTINUED ITEM</option>
+            <option value="CLO" {{(($product->status=='CLO')? 'selected' : '')}}>CLOSEOUT ITEM</option>
+            <option value="NA" {{(($product->status=='NA')? 'selected' : '')}}>NOT AVAILABLE AT THIS TIME</option>
+            <option value="NLA" {{(($product->status=='NLA')? 'selected' : '')}}>NO LONGER AVAILABLE</option>
         </select>
           @error('status')
           <span class="text-danger">{{$message}}</span>

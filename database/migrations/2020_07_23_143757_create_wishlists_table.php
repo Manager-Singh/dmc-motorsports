@@ -18,6 +18,7 @@ class CreateWishlistsTable extends Migration
             $table->unsignedBigInteger('product_id');
             $table->unsignedBigInteger('cart_id')->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
+            $table->text('guest_id')->nullable();
             $table->float('price');
             $table->integer('quantity');
             $table->float('amount');

@@ -36,6 +36,8 @@ use App\Models\Vehiclemodel;
 use App\Models\Vehicleyear;
 use App\Models\Resource;
 use App\Models\ProductResource;
+use App\Models\CategoryImage;
+use App\Models\VehiclemodelCategory;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -279,6 +281,8 @@ class AdminController extends Controller
                 $process  = $this->processProduct($response->json('data'),$response->json('meta'),$endpoint_id);
             }else if($modalUrl=='App\Models\Item'){
                 $process  = $this->processItems($response->json('data'),$response->json('meta'),$endpoint_id);
+            }else if($modalUrl=='App\Models\Category'){
+                $process  = $this->processCategory($response->json('data'),$response->json('meta'),$endpoint_id);
             }else{
                 $process  = $this->processResponse($response->json('data'),$response->json('meta'),$endpoint_id);
             }
@@ -302,6 +306,91 @@ class AdminController extends Controller
 
         return $responseData;
 
+    }
+
+    private function processCategory($response,$meta,$endpoint_id)
+    {
+        $endpoint = Endpoint::findOrFail($endpoint_id);
+        foreach ($response as $category) {
+            // $features  = $product['features']['data'];
+            $images    = $category['images']['data'];
+            $vehiclemodels = $category['vehiclemodels']['data'];
+            // $tags      = $product['tags']['data'];
+           // $items     = $product['items']['data'];
+
+            // $p_slug=Str::slug($product['name']);
+            if(isset($category['parent_id'])){
+                $is_parent= 0;
+            }else{
+                $is_parent= 1;
+            }
+            $db_cat = Category::updateOrCreate(
+                ['wps_id' => $category['id']],
+                [
+                    'wps_id' => $category['id'],
+                    'vocabulary_id' => $category['vocabulary_id'],
+                    'parent_id' => $category['parent_id'],
+                    'title' => $category['name'],
+                    'slug' => Str::uuid(),
+                    'description' => $category['description'],
+                    'link' => $category['link'],
+                    'link_target_blank' => $category['link_target_blank'],
+                    'left' => $category['left'],
+                    'right' => $category['right'],
+                    'depth' => $category['depth'],
+                    'status'=>'active',
+                    'is_parent' =>$is_parent
+                    // ... other fields
+                ]
+            );
+       
+           
+            if(count($vehiclemodels)>0){
+                foreach ($vehiclemodels as $vehiclemodel) {
+                    
+                    $VehiclemodelCategory_save = VehiclemodelCategory::updateOrCreate(
+                        ['vehiclemodel_id' => $vehiclemodel['vehiclemake_id'],
+                        'category_id' => $db_cat->wps_id
+                        ],
+                        [
+                            'category_id' => $db_cat->wps_id,
+                            'vehiclemodel_id' => $vehiclemodel['vehiclemake_id'],
+                            // ... other fields
+                        ]
+                    );
+                }
+            }
+            if(count($images)>0){
+                foreach ($images as $image) {
+                    
+                    $product_image_save = CategoryImage::updateOrCreate(
+                        ['image_id' => $image['id'],
+                        'category_id' => $db_cat->wps_id
+                        ],
+                        [
+                            'category_id' => $db_cat->wps_id,
+                            'image_id' => $image['id'],
+                            // ... other fields
+                        ]
+                    );
+                }
+            }
+            
+            
+        }
+    if(isset($meta['cursor']['next'])){
+        $endpoint->sync = $meta['cursor']['next'];
+        $endpoint->current = $meta['cursor']['current'];
+        $endpoint->prev = $meta['cursor']['prev'];
+        $endpoint->status = 'Processing';
+        $endpoint->save();
+        return true;
+       
+    }else{
+        $endpoint->status = 'Completed';
+        $endpoint->save();
+        return false;
+    }
     }
 
     private function processResponse($response,$meta,$endpoint_id)

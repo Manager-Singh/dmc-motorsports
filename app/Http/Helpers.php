@@ -1,9 +1,13 @@
 <?php
 use App\Models\Message;
 use App\Models\Category;
+use App\Models\Attributekey;
+use App\Models\Attributevalue;
 use App\Models\PostTag;
 use App\Models\PostCategory;
 use App\Models\Order;
+use App\Models\Item;
+use App\Models\VehiclemodelCategory;
 use App\Models\Wishlist;
 use App\Models\Shipping;
 use App\Models\Cart;
@@ -21,6 +25,51 @@ class Helper{
         return $menu;
     } 
     
+    public static function getItemCount($categoryId,$product_type){
+        $items_count = Item::whereHas('categories', function ($query) use ($categoryId) {
+            $query->where('categories.wps_id', $categoryId);
+        })->where('product_type', $product_type)->count();
+        return $items_count;
+    }
+    public static function getHeaderAttributeValues($id = 1){
+        $attributevalues = Attributevalue::has('items')->where('attributekey_id',$id)->get();
+        // $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
+        // ->groupBy('category_id')
+        // ->get();
+
+        $categories = Category::has('items')->where('status','active')->where('is_parent',1)->orderBy('title','ASC')->get();
+    
+
+
+
+// print_r($items);
+// die;
+      
+        if($categories){
+            ?>
+            
+            <li>
+            <a href="javascript:void(0);">Category<i class="ti-angle-down"></i></a>
+                <ul class="dropdown border-0 shadow">
+                <?php
+                    foreach($categories as $cat_info){
+                        $categoryId = $cat_info->wps_id;
+                        $main_counter = 0;
+                        
+                        ?>
+                            <li><a href="<?php echo route('new-product-cat',$cat_info->wps_id); ?>"><?php echo $cat_info->title; ?></a>
+                               
+                            </li>
+                            <?php
+                         
+                        }
+                   
+                    ?>
+                </ul>
+            </li>
+        <?php
+        }
+    }
     public static function getHeaderCategory(){
         $category = new Category();
         // dd($category);
@@ -34,26 +83,40 @@ class Helper{
                 <ul class="dropdown border-0 shadow">
                 <?php
                     foreach($menu as $cat_info){
-                        if($cat_info->child_cat->count()>0){
+                        
+                            if($cat_info->child_cat->count()>0){
+                                // $count_sub_catmain=DB::table('item_categories')->where('category_id',$cat_info->wps_id)->count();
+                                $childWpsIds = $cat_info->child_cat->pluck('wps_id');
+                                
+                                $count_sub_catmain=DB::table('item_categories')->whereIn('category_id',$childWpsIds)->count();
+                                // dd($count_sub_catmain);
+                             if($count_sub_catmain>0){
+                               
                             ?>
-                            <li><a href="<?php echo route('product-cat',$cat_info->slug); ?>"><?php echo $cat_info->title; ?></a>
+                            <li><a href="<?php echo route('product-cat',$cat_info->wps_id); ?>"><?php echo $cat_info->title; ?></a>
                                 <ul class="dropdown sub-dropdown border-0 shadow">
                                     <?php
+                                    
                                     foreach($cat_info->child_cat as $sub_menu){
+                                        $count_sub_cat=DB::table('item_categories')->where('category_id',$sub_menu->wps_id)->count();
+                                        if($count_sub_cat>0){
                                         ?>
-                                        <li><a href="<?php echo route('product-sub-cat',[$cat_info->slug,$sub_menu->slug]); ?>"><?php echo $sub_menu->title; ?></a></li>
+                                        <li><a href="<?php echo route('product-sub-cat',[$cat_info->wps_id,$sub_menu->wps_id]); ?>"><?php echo $sub_menu->title; ?></a></li>
                                         <?php
+                                        }
                                     }
                                     ?>
                                 </ul>
                             </li>
                             <?php
                         }
+                    }
                         else{
                             ?>
-                                <li><a href="<?php echo route('product-cat',$cat_info->slug);?>"><?php echo $cat_info->title; ?></a></li>
+                                <li><a href="<?php echo route('product-cat',$cat_info->wps_id);?>"><?php echo $cat_info->title; ?></a></li>
                             <?php
                         }
+                    
                     }
                     ?>
                 </ul>
@@ -90,7 +153,7 @@ class Helper{
             return Cart::where('user_id',$user_id)->where('order_id',null)->sum('quantity');
         }
         else{
-            return 0;
+            return Cart::where('guest_id',request()->session()->get('guest_id'))->where('order_id',null)->sum('quantity');
         }
     }
     // relationship cart with product
@@ -101,10 +164,17 @@ class Helper{
     public static function getAllProductFromCart($user_id=''){
         if(Auth::check()){
             if($user_id=="") $user_id=auth()->user()->id;
-            return Cart::with('product')->where('user_id',$user_id)->where('order_id',null)->get();
+             $data = Cart::with(['product','product.images'])->where('user_id',$user_id)->where('order_id',null)->get();
+            // print_r($data);
+            
+            return $data;
         }
         else{
-            return 0;
+            $data = Cart::with(['product','product.images'])->where('guest_id',request()->session()->get('guest_id'))->where('order_id',null)->get();
+            // print_r($data);
+            // die;
+            return $data;
+            // return 0;
         }
     }
     // Total amount cart
@@ -114,7 +184,8 @@ class Helper{
             return Cart::where('user_id',$user_id)->where('order_id',null)->sum('amount');
         }
         else{
-            return 0;
+            return Cart::where('guest_id',request()->session()->get('guest_id'))->where('order_id',null)->sum('amount');
+           // return 0;
         }
     }
     // Wishlist Count
@@ -125,16 +196,19 @@ class Helper{
             return Wishlist::where('user_id',$user_id)->where('cart_id',null)->sum('quantity');
         }
         else{
-            return 0;
+            return Wishlist::where('guest_id',request()->session()->get('guest_id'))->where('cart_id',null)->sum('quantity');
+
+            //return 0;
         }
     }
     public static function getAllProductFromWishlist($user_id=''){
         if(Auth::check()){
             if($user_id=="") $user_id=auth()->user()->id;
-            return Wishlist::with('product')->where('user_id',$user_id)->where('cart_id',null)->get();
+            return Wishlist::with('product','product.images')->where('user_id',$user_id)->where('cart_id',null)->get();
         }
         else{
-            return 0;
+            return Wishlist::with('product','product.images')->where('guest_id',request()->session()->get('guest_id'))->where('cart_id',null)->get();
+            //return 0;
         }
     }
     public static function totalWishlistPrice($user_id=''){
@@ -143,7 +217,8 @@ class Helper{
             return Wishlist::where('user_id',$user_id)->where('cart_id',null)->sum('amount');
         }
         else{
-            return 0;
+            return Wishlist::where('guest_id',request()->session()->get('guest_id'))->where('cart_id',null)->sum('amount');
+          //  return 0;
         }
     }
 
@@ -173,7 +248,7 @@ class Helper{
     }
 
     public static function shipping(){
-        return Shipping::orderBy('id','DESC')->get();
+        return Shipping::orderBy('id','DESC')->where('type','Standard Shipping')->first();
     }
 
     

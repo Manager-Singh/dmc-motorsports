@@ -12,7 +12,7 @@
     use App\Http\Controllers\ProductReviewController;
     use App\Http\Controllers\PostCommentController;
     use App\Http\Controllers\CouponController;
-    use App\Http\Controllers\PayPalController;
+    use App\Http\Controllers\PaypalController;
     use App\Http\Controllers\NotificationController;
     use App\Http\Controllers\HomeController;
     use \UniSharp\LaravelFilemanager\Lfm;
@@ -55,7 +55,9 @@
     Route::get('login/{provider}/callback/', [LoginController::class, 'Callback'])->name('login.callback');
 
     Route::get('/', [FrontendController::class, 'home'])->name('home');
+    Route::get('/new', [FrontendController::class, 'nhome'])->name('nhome');
     Route::get('/load-more', [FrontendController::class, 'loadMore'])->name('loadMore');
+    Route::get('/get-vehicle-makes-cat',[FrontendController::class, 'getVehicleMakesCategories'])->name('get.vehicle.makes.categories');
     Route::get('/get-vehicle-models',[FrontendController::class, 'getVehicleModels'])->name('get.vehicle.models');
     Route::get('/get-vehicle-model-years',[FrontendController::class, 'getVehicleModelYears'])->name('get.vehicle.model.years');
     Route::post('/search-items',[FrontendController::class, 'searchItems'])->name('search.items');
@@ -68,25 +70,27 @@
     Route::get('/contact', [FrontendController::class, 'contact'])->name('contact');
     Route::post('/contact/message', [MessageController::class, 'store'])->name('contact.store');
     Route::get('product-detail/{slug}', [FrontendController::class, 'productDetail'])->name('product-detail');
-    Route::post('/product/search', [FrontendController::class, 'productSearch'])->name('product.search');
-    Route::get('/product-cat/{slug}', [FrontendController::class, 'productCat'])->name('product-cat');
+    Route::any('/product/search', [FrontendController::class, 'productSearch'])->name('product.search');
+    Route::get('/product-cat/{wps_id}', [FrontendController::class, 'productCat'])->name('product-cat');
+    Route::get('/product-category/{wps_id}', [FrontendController::class, 'newProductCat'])->name('new-product-cat');
     Route::get('/product-sub-cat/{slug}/{sub_slug}', [FrontendController::class, 'productSubCat'])->name('product-sub-cat');
+    Route::get('/products/{cat_id}/{name}', [FrontendController::class, 'productTypesByCat'])->name('product-types-by-cat');
     Route::get('/product-brand/{slug}', [FrontendController::class, 'productBrand'])->name('product-brand');
-// Cart section
-    Route::get('/add-to-cart/{slug}', [CartController::class, 'addToCart'])->name('add-to-cart')->middleware('user');
-    Route::post('/add-to-cart', [CartController::class, 'singleAddToCart'])->name('single-add-to-cart')->middleware('user');
+// Cart section  ->middleware('user')
+    Route::get('/add-to-cart/{slug}', [CartController::class, 'addToCart'])->name('add-to-cart');
+    Route::post('/add-to-cart', [CartController::class, 'singleAddToCart'])->name('single-add-to-cart');
     Route::get('cart-delete/{id}', [CartController::class, 'cartDelete'])->name('cart-delete');
     Route::post('cart-update', [CartController::class, 'cartUpdate'])->name('cart.update');
 
     Route::get('/cart', function () {
         return view('frontend.pages.cart');
     })->name('cart');
-    Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout')->middleware('user');
+    Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
 // Wishlist
     Route::get('/wishlist', function () {
         return view('frontend.pages.wishlist');
     })->name('wishlist');
-    Route::get('/wishlist/{slug}', [WishlistController::class, 'wishlist'])->name('add-to-wishlist')->middleware('user');
+    Route::get('/wishlist/{slug}', [WishlistController::class, 'wishlist'])->name('add-to-wishlist');
     Route::get('wishlist-delete/{id}', [WishlistController::class, 'wishlistDelete'])->name('wishlist-delete');
     Route::post('cart/order', [OrderController::class, 'store'])->name('cart.order');
     Route::get('order/pdf/{id}', [OrderController::class, 'pdf'])->name('order.pdf');
@@ -119,9 +123,16 @@
 // Coupon
     Route::post('/coupon-store', [CouponController::class, 'couponStore'])->name('coupon-store');
 // Payment
-    Route::get('payment', [PayPalController::class, 'payment'])->name('payment');
-    Route::get('cancel', [PayPalController::class, 'cancel'])->name('payment.cancel');
-    Route::get('payment/success', [PayPalController::class, 'success'])->name('payment.success');
+
+    Route::get('payment/{id}', [PaypalController::class, 'payment'])->name('payment');
+    Route::get('payment-stripe/{id}', [PaypalController::class, 'payment_get_stripe'])->name('payment.stripe.get');
+    Route::post('paymentstripe', [PaypalController::class, 'payment_stripe'])->name('payment.stripe');
+    Route::get('cancel', [PaypalController::class, 'cancel'])->name('payment.cancel');
+    Route::get('payment/success/', [PaypalController::class, 'success'])->name('payment.success');
+
+    Route::get('cancel/stripe/{order_id}', [PaypalController::class, 'cancel_stripe'])->name('payment.cancel.stripe');
+    Route::get('payment/success/stripe{order_id}', [PaypalController::class, 'success_stripe'])->name('payment.success.stripe');
+    
 
 
 // Backend section start

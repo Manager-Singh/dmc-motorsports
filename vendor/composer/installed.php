@@ -1,14 +1,12 @@
 <?php return array(
     'root' => array(
         'name' => 'laravel/laravel',
-        'pretty_version' => 'dev-master',
-        'version' => 'dev-master',
-        'reference' => '4192c944423dd35a530ef0e0c24b103050862b28',
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => 'fc04cf053df687111f9a118241bd6f7cb329b9cc',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
-        'aliases' => array(
-            0 => '10.x-dev',
-        ),
+        'aliases' => array(),
         'dev' => true,
     ),
     'versions' => array(
@@ -400,14 +398,12 @@
             'dev_requirement' => false,
         ),
         'laravel/laravel' => array(
-            'pretty_version' => 'dev-master',
-            'version' => 'dev-master',
-            'reference' => '4192c944423dd35a530ef0e0c24b103050862b28',
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => 'fc04cf053df687111f9a118241bd6f7cb329b9cc',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
-            'aliases' => array(
-                0 => '10.x-dev',
-            ),
+            'aliases' => array(),
             'dev_requirement' => false,
         ),
         'laravel/pint' => array(
@@ -1092,6 +1088,15 @@
             'reference' => 'ece40beaa55153119be30e74fff71001882629ce',
             'type' => 'library',
             'install_path' => __DIR__ . '/../srmklive/paypal',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'stripe/stripe-php' => array(
+            'pretty_version' => 'v13.7.0',
+            'version' => '13.7.0.0',
+            'reference' => '1f60eb1a1b86b29f2ba0e14c0ae905ca838c1cdd',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../stripe/stripe-php',
             'aliases' => array(),
             'dev_requirement' => false,
         ),

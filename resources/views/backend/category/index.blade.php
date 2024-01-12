@@ -79,7 +79,9 @@
             @endforeach
           </tbody>
         </table>
-        <span style="float:right">{{$categories->links()}}</span>
+        <div class="d-flex justify-content-center">
+          {{ $categories->links('vendor.pagination.bootstrap-4') }}
+      </div>
         @else
           <h6 class="text-center">No Categories found!!! Please create Category</h6>
         @endif

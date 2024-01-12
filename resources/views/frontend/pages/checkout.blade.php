@@ -61,6 +61,17 @@
                                             @enderror
                                         </div>
                                     </div>
+                                    @if (auth()->guest()) 
+                                        <div class="col-lg-6 col-md-6 col-12">
+                                            <div class="form-group">
+                                                <label>Password<span>*</span></label>
+                                                <input type="password" name="password" placeholder="" value="">
+                                                @error('password')
+                                                    <span class='text-danger'>{{$message}}</span>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    @endif
                                     <div class="col-lg-6 col-md-6 col-12">
                                         <div class="form-group">
                                             <label>Phone Number <span>*</span></label>
@@ -174,7 +185,7 @@
                                                 <option value="HK">Hong Kong SAR China</option>
                                                 <option value="HU">Hungary</option>
                                                 <option value="IS">Iceland</option>
-                                                <option value="IN">India</option>
+                                                <option value="IN" selected="selected">India</option>
                                                 <option value="ID">Indonesia</option>
                                                 <option value="IR">Iran</option>
                                                 <option value="IQ">Iraq</option>
@@ -225,7 +236,7 @@
                                                 <option value="MM">Myanmar [Burma]</option>
                                                 <option value="NA">Namibia</option>
                                                 <option value="NR">Nauru</option>
-                                                <option value="NP" selected="selected">Nepal</option>
+                                                <option value="NP">Nepal</option>
                                                 <option value="NL">Netherlands</option>
                                                 <option value="AN">Netherlands Antilles</option>
                                                 <option value="NC">New Caledonia</option>
@@ -355,6 +366,12 @@
                             </div>
                         </div>
                         <div class="col-lg-4 col-12">
+                                             @php
+                                                $total_amount=Helper::totalCartPrice();
+                                                if(session('coupon')){
+                                                    $total_amount=$total_amount-session('coupon')['value'];
+                                                }
+                                            @endphp
                             <div class="order-details">
                                 <!-- Order Widget -->
                                 <div class="single-widget">
@@ -364,7 +381,16 @@
 										    <li class="order_subtotal" data-price="{{Helper::totalCartPrice()}}">Cart Subtotal<span>${{number_format(Helper::totalCartPrice(),2)}}</span></li>
                                             <li class="shipping">
                                                 Shipping Cost
-                                                @if(count(Helper::shipping())>0 && Helper::cartCount()>0)
+                                                @if(Helper::shipping())
+                                                @if($total_amount<=150)
+                                                <span value="{{Helper::shipping()->id}}" class="shippingOption" data-price="{{Helper::shipping()->price}}">${{number_format(Helper::shipping()->price,2)}}</span>
+                                                @elseif($total_amount>150)
+                                                <span>Free</span>
+                                                @endif
+                                                @else 
+                                                    <span>Free</span>
+                                                @endif
+                                                {{-- @if(count(Helper::shipping())>0 && Helper::cartCount()>0)
                                                     <select name="shipping" class="nice-select">
                                                         <option value="">Select your address</option>
                                                         @foreach(Helper::shipping() as $shipping)
@@ -373,18 +399,13 @@
                                                     </select>
                                                 @else 
                                                     <span>Free</span>
-                                                @endif
+                                                @endif --}}
                                             </li>
                                             
                                             @if(session('coupon'))
                                             <li class="coupon_price" data-price="{{session('coupon')['value']}}">You Save<span>${{number_format(session('coupon')['value'],2)}}</span></li>
                                             @endif
-                                            @php
-                                                $total_amount=Helper::totalCartPrice();
-                                                if(session('coupon')){
-                                                    $total_amount=$total_amount-session('coupon')['value'];
-                                                }
-                                            @endphp
+                                           
                                             @if(session('coupon'))
                                                 <li class="last"  id="order_total_price">Total<span>${{number_format($total_amount,2)}}</span></li>
                                             @else
@@ -399,10 +420,10 @@
                                     <h2>Payments</h2>
                                     <div class="content">
                                         <div class="checkbox">
-                                            {{-- <label class="checkbox-inline" for="1"><input name="updates" id="1" type="checkbox"> Check Payments</label> --}}
                                             <form-group>
-                                                <input name="payment_method"  type="radio" value="cod"> <label> Cash On Delivery</label><br>
-                                                <input name="payment_method"  type="radio" value="paypal"> <label> PayPal</label> 
+                                                <input name="payment_method" class="payment-method cash" type="radio" value="cod" checked> <label> Cash On Delivery</label><br>
+                                                <input name="payment_method" class="payment-method stripe" type="radio" value="stripe"> <label> Stripe</label> 
+                                                <input name="payment_method" class="payment-method paypal" type="radio" value="paypal"> <label> Paypal</label> 
                                             </form-group>
                                             
                                         </div>
@@ -412,7 +433,7 @@
                                 <!-- Payment Method Widget -->
                                 <div class="single-widget payement">
                                     <div class="content">
-                                        <img src="{{('backend/img/payment-method.png')}}" alt="#">
+                                        <img src="{{asset('backend/img/payment-method.png')}}" alt="#">
                                     </div>
                                 </div>
                                 <!--/ End Payment Method Widget -->
@@ -420,7 +441,9 @@
                                 <div class="single-widget get-button">
                                     <div class="content">
                                         <div class="button">
-                                            <button type="submit" class="btn">proceed to checkout</button>
+                                        <button type="button" class="btn btn-primary btn-block btn-stripe" id="checkout-button" style="display:none">proceed to checkout ${{number_format($total_amount,2)}}</button>
+                                        
+                                        <button type="submit" class="btn btn-cod-pay">proceed to checkout</button>
                                         </div>
                                     </div>
                                 </div>
@@ -442,7 +465,7 @@
                     <div class="single-service">
                         <i class="ti-rocket"></i>
                         <h4>Free shiping</h4>
-                        <p>Orders over $100</p>
+                        <p>Orders over $150</p>
                     </div>
                     <!-- End Single Service -->
                 </div>
@@ -487,8 +510,8 @@
                         <!-- Start Newsletter Inner -->
                         <div class="inner">
                             <h4>Newsletter</h4>
-                            <p> Subscribe to our newsletter and get <span>10%</span> off your first purchase</p>
-                            <form action="mail/mail.php" method="get" target="_blank" class="newsletter-inner">
+                            <p> Subscribe to our newsletter </p>
+                            <form action="#" method="get" target="_blank" class="newsletter-inner">
                                 <input name="EMAIL" placeholder="Your email address" required="" type="email">
                                 <button class="btn">Subscribe</button>
                             </form>
@@ -545,8 +568,105 @@
 	</style>
 @endpush
 @push('scripts')
+<script src="https://js.stripe.com/v3/"></script>
 	<script src="{{asset('frontend/js/nice-select/js/jquery.nice-select.min.js')}}"></script>
 	<script src="{{ asset('frontend/js/select2/js/select2.min.js') }}"></script>
+    
+    <!-- <script type="text/javascript">
+        var stripe = Stripe("{{ env('STRIPE_KEY') }}");
+        var checkoutButton = document.getElementById("checkout-button");
+        checkoutButton.addEventListener("click", function () {
+            fetch("{{ route('payment.stripe') }}", {
+                method: "POST",
+            })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (session) {
+                return stripe.redirectToCheckout({ sessionId: session.id });
+            })
+            .then(function (result) {
+                if (result.error) {
+                    alert(result.error.message);
+                }
+            })
+            .catch(function (error) {
+                console.error("Error:", error);
+            });
+        });
+    </script> -->
+    <script type="text/javascript">
+    var stripe = Stripe("{{ env('STRIPE_KEY') }}");
+    var checkoutButton = document.getElementById("checkout-button");
+
+    checkoutButton.addEventListener("click", function () {
+        // Perform client-side validation
+        if (validateForm()) {
+            // If validation passes, proceed with AJAX request
+            sendPaymentRequest();
+        }
+    });
+
+    function validateForm() {
+        // Implement your form validation logic here
+        // Return true if validation passes, false otherwise
+
+        // Example validation (you can customize this according to your needs)
+        var firstName = document.getElementsByName("first_name")[0].value;
+        var lastName = document.getElementsByName("last_name")[0].value;
+        var email = document.getElementsByName("email")[0].value;
+    
+        var phone = document.getElementsByName("phone")[0].value;
+        var address1 = document.getElementsByName("address1")[0].value;
+
+      
+            if (!firstName || !lastName || !email || !phone || !address1) {
+                alert("Please fill in all required fields.");
+                return false;
+            }
+        
+       
+
+        return true;
+    }
+
+    function sendPaymentRequest() {
+        fetch("{{ route('payment.stripe') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify(getFormData())
+        })
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (session) {
+            return stripe.redirectToCheckout({ sessionId: session.id });
+        })
+        .then(function (result) {
+            if (result.error) {
+                alert(result.error.message);
+            }
+        })
+        .catch(function (error) {
+            console.error("Error:", error);
+        });
+    }
+
+    function getFormData() {
+        // Collect form data and return as an object
+        var formData = {};
+        var formElements = document.getElementsByClassName("form")[0].elements;
+
+        for (var i = 0; i < formElements.length; i++) {
+            formData[formElements[i].name] = formElements[i].value;
+        }
+
+        return formData;
+    }
+</script>
 	<script>
 		$(document).ready(function() { $("select.select2").select2(); });
   		$('select.nice-select').niceSelect();
@@ -574,6 +694,24 @@
 				// alert(coupon);
 				$('#order_total_price span').text('$'+(subtotal + cost-coupon).toFixed(2));
 			});
+
+            $('.payment-method').on('click', function() {
+                var selectedValue = $('input[name="payment_method"]:checked').val();
+               //alert('Selected value: ' + selectedValue);
+               console.log(selectedValue);
+                if(selectedValue=='stripe'){
+                    
+                    $('.btn-cod-pay').hide();
+                    $('.btn-stripe').show();
+                    
+                }else{
+                    $('.btn-stripe').hide();
+                    $('.btn-cod-pay').show();
+                    
+                }
+
+                
+            });
 
 		});
 
