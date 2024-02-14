@@ -52,6 +52,8 @@
   <!-- Page level plugins -->
   <script src="{{asset('backend/vendor/chart.js/Chart.min.js')}}"></script>
   <script src="{{asset('vendor/laravel-filemanager/js/stand-alone-button.js')}}"></script>
+  <!-- Select2 plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
   <!-- Page level custom scripts -->
   {{-- <script src="{{asset('backend/js/demo/chart-area-demo.js')}}"></script> --}}

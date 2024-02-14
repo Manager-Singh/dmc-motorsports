@@ -14,16 +14,24 @@
     <div class="container-fluid p-0" >
         <div id="header-carousel" class="carousel slide" data-ride="carousel">
             <div class="carousel-inner">
-                <div class="carousel-item active">
-                    <img class="w-100" src="{{asset('frontend/img/hero-banner-1.jpg')}}" alt="Image">
+            @foreach($banners as $key=>$banner)
+                <div class="carousel-item {{(($key==0)? 'active' : '')}}">
+                    <img class="w-100" src="{{$banner->photo}}" alt="Image">
                     <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
-                        <div class="p-3" style="max-width: 900px;">
-							<h2 class="display-1mb-md-4">Warehouse Clearance Sale</h2>
-                            <h4 class="text-uppercase mb-md-3">Kick 2024 Off Right With Up To 75% Off</h4>                           
+                        <div class="p-3" style="max-width: 900px;display:none;">
+                        @if($banner->title)
+							<h2 class="display-1mb-md-4">{{$banner->title}}</h2>
+                            @endif
+                            @if($banner->description)
+                            <p class="text-uppercase mb-md-3">{!! html_entity_decode($banner->description) !!}</p>  
+                            @endif
+                            @if($banner->title)                         
                             <a href="{{route('product-grids')}}" class="btn btn-primary mt-2">Shop Now</a>
+                            @endif
                         </div>
                     </div>
                 </div>
+                @endforeach
  
             </div>
             <a class="carousel-control-prev" href="#header-carousel" data-slide="prev">
@@ -41,15 +49,15 @@
 
     <div class="container-fluid py-2" style="border-top:1px solid #ccc;">
         <div class="container pb-3">
-            <div class="row mt-3 categories">                
+            <div class="row mt-3">                
                 <ul class="partner-logo">
-					<li><a href=""><img src="https://dmc-motorsports.com/public/storage/photos/1/Logo/dmc-logo.png" /></a></li>
-					<li><a href=""><img src="https://dmc-motorsports.com/public/storage/photos/1/Logo/dmc-logo.png" /></a></li>
-					<li><a href=""><img src="https://dmc-motorsports.com/public/storage/photos/1/Logo/dmc-logo.png" /></a></li>
-					<li><a href=""><img src="https://dmc-motorsports.com/public/storage/photos/1/Logo/dmc-logo.png" /></a></li>
-					<li><a href=""><img src="https://dmc-motorsports.com/public/storage/photos/1/Logo/dmc-logo.png" /></a></li>
-					<li><a href=""><img src="https://dmc-motorsports.com/public/storage/photos/1/Logo/dmc-logo.png" /></a></li>
-					<li><a href=""><img src="https://dmc-motorsports.com/public/storage/photos/1/Logo/dmc-logo.png" /></a></li>
+					<li><a href=""><img src="{{asset('frontend/img/partner-logo-1.png')}}" /></a></li>
+					<li><a href=""><img src="{{asset('frontend/img/partner-logo-2.jpg')}}" /></a></li>
+					<li><a href=""><img src="{{asset('frontend/img/partner-logo-3.png')}}" /></a></li>
+					<li><a href=""><img src="{{asset('frontend/img/partner-logo-4.png')}}" /></a></li>
+					<li><a href=""><img src="{{asset('frontend/img/partner-logo-5.png')}}" /></a></li>
+					<li><a href=""><img src="{{asset('frontend/img/partner-logo-6.png')}}" /></a></li>
+					<li><a href=""><img src="{{asset('frontend/img/partner-logo-7.png')}}" /></a></li>
 				
 				</ul>
             </div>
@@ -62,7 +70,7 @@
             <div class="row mt-3 categories">
                 <div class="col-lg-4 mb-2">
                     <div class="align-items-center">
-						<img src="{{asset('frontend/img/Homepage_Dirt.jpg')}}" />      
+						<img src="{{asset('frontend/img/home-categories-apperal.png')}}" />      
 						<div class="content">
 							<h4 class="text-uppercase m-0"><a href="{{route('new-product-cat',192)}}"> Apparel	 </a></h4>
 							<p class="text-uppercase m-0"><a href="{{route('product-types-by-cat',[192,'Headgear'])}}">Apparel Headgear</a></p>
@@ -73,7 +81,7 @@
                 </div>
                 <div class="col-lg-4 mb-2">
                     <div class="align-items-center">
-                        <img src="{{asset('frontend/img/Homepage_Street.jpg')}}" /> 
+                        <img src="{{asset('frontend/img/home-categories-atv.jpg')}}" /> 
                         <div class="content">
 							<h4 class="text-uppercase m-0"><a href="#{{route('new-product-cat',193)}}"> ATV </a></h4>
 							<p class="text-uppercase m-0"><a href="{{route('product-types-by-cat',[193,'Drive'])}}">ATV Drive</a></p>
@@ -84,12 +92,12 @@
                 </div>
                 <div class="col-lg-4 mb-2">
                     <div class="align-items-center">
-                        <img src="{{asset('frontend/img/Homepage_ATV.jpg')}}" /> 
+                        <img src="{{asset('frontend/img/home-categories-offroad.jpg')}}" /> 
                         <div class="content">
-							<h4 class="text-uppercase m-0"><a href="{{route('new-product-cat',194)}}"> Bicycle </a></h4>
-							<p class="text-uppercase m-0"><a href="{{route('product-types-by-cat',[194,'Gloves'])}}">Bicycle Gloves</a></p>
-							<p class="text-uppercase m-0"><a href="{{route('product-types-by-cat',[194,'Jerseys'])}}">Bicycle Jerseys</a></p>
-							<p class="text-uppercase m-0"><a href="{{route('product-types-by-cat',[194,'Pants'])}}">Bicycle Pants</a></p>
+							<h4 class="text-uppercase m-0"><a href="{{route('new-product-cat',197)}}"> Offroad </a></h4>
+							<p class="text-uppercase m-0"><a href="{{route('product-types-by-cat',[197,'Brakes'])}}">Offroad Brakes</a></p>
+							<p class="text-uppercase m-0"><a href="{{route('product-types-by-cat',[197,'Engine'])}}">Offroad Engine</a></p>
+							<p class="text-uppercase m-0"><a href="{{route('product-types-by-cat',[197,'Tools'])}}">Offroad Tools</a></p>
 						</div>
                     </div>
                 </div>
@@ -97,25 +105,83 @@
         </div>
     </div>
 
-        <div class="container-fluid">
+        <!--div class="container-fluid">
             <div class="bg-banner one py-5 px-4 text-center">
                 <div class="py-2">
-                    <h2 class="display-1 text-uppercase mb-4">In-Stock Now!</h2>
+                    <h2 class="display-1 text-uppercase mb-4">E-Bikes</h2>
                     <p class="mb-4">12e & 16e STACYC E-Bikes!</p>
                     <a class="btn btn-primary" href="">Shop Now</a>
                 </div>
             </div>
 
+    </div-->
+	
+	<div class="container-fluid p-0">
+        <div id="e-bike-carousel" class="carousel slide" data-ride="carousel">
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <img class="w-100" src="{{asset('frontend/img/e-bike-slider-one.png')}}" alt="Image">
+                    <div class="carousel-caption e-bike d-flex flex-column bg-banner">
+                        <div class="py-2">
+							<h2 class="display-1 text-uppercase mb-4">E-Bikes</h2>
+							<p class="mb-4">12e & 16e STACYC E-Bikes!</p>
+							<a class="btn btn-primary" href="">Shop Now</a>
+						</div>
+                    </div>
+                </div>
+				<div class="carousel-item">
+                    <img class="w-100" src="{{asset('frontend/img/e-bike-slider-two.png')}}" alt="Image">
+                    <div class="carousel-caption e-bike d-flex flex-column bg-banner">
+                        <div class="py-2">
+							<h2 class="display-1 text-uppercase mb-4">E-Bikes</h2>
+							<p class="mb-4">12e & 16e STACYC E-Bikes!</p>
+							<a class="btn btn-primary" href="">Shop Now</a>
+						</div>
+                    </div>
+                </div>
+				<div class="carousel-item">
+                    <img class="w-100" src="{{asset('frontend/img/e-bike-slider-three.png')}}" alt="Image">
+                    <div class="carousel-caption e-bike d-flex flex-column bg-banner">
+                        <div class="py-2">
+							<h2 class="display-1 text-uppercase mb-4">E-Bikes</h2>
+							<p class="mb-4">12e & 16e STACYC E-Bikes!</p>
+							<a class="btn btn-primary" href="">Shop Now</a>
+						</div>
+                    </div>
+                </div>
+				<div class="carousel-item">
+                    <img class="w-100" src="{{asset('frontend/img/e-bike-slider-four.png')}}" alt="Image">
+                    <div class="carousel-caption e-bike d-flex flex-column bg-banner">
+                        <div class="py-2">
+							<h2 class="display-1 text-uppercase mb-4">E-Bikes</h2>
+							<p class="mb-4">12e & 16e STACYC E-Bikes!</p>
+							<a class="btn btn-primary" href="">Shop Now</a>
+						</div>
+                    </div>
+                </div>
+ 
+            </div>
+            <a class="carousel-control-prev" href="#e-bike-carousel" data-slide="prev">
+                <div class="btn btn-dark" style="width: 45px; height: 45px;">
+                    <span class="carousel-control-prev-icon mb-n2"></span>
+                </div>
+            </a>
+            <a class="carousel-control-next" href="#e-bike-carousel" data-slide="next">
+                <div class="btn btn-dark" style="width: 45px; height: 45px;">
+                    <span class="carousel-control-next-icon mb-n2"></span>
+                </div>
+            </a>
+        </div>
     </div>
 
-	<div class="container-fluid">
+
+	<div class="container-fluid mt-4">
             <div class="bg-banner two py-5 px-4 text-center">
                 <div class="py-2">
-                    <h2 class="display-1 text-uppercase mb-4">Upgrade Your Exhaust</h2>
+                    <h2 class="display-1 text-uppercase mb-4">DMC Motorsports Exclusive Products</h2>
                     <p class="mb-4">More Power For Winter</p>
 					<div class="btn-div">
-						<a class="btn btn-primary" href="">Shop 2-Stroke Exhaust</a>
-						<a class="btn btn-primary" href="">Shop 4-Stroke Exhaust</a>
+						<a class="btn btn-primary" href="https://dmc-motorsports.com/products/197/Exhaust">Shop 2-Stroke Exhaust</a>
 					</div>
                 </div>
             </div>
@@ -124,30 +190,36 @@
 
     <div class="container-fluid py-5">
         <div class="container pt-5 pb-3">
-            <h2 class="display-5 text-uppercase text-center mb-5">TIRE TIME</h2>
+            <h2 class="display-5 text-uppercase text-center mb-5">TIRE FINDER</h2>
             <div class="row mt-3 time-tire">
                 <div class="col-lg-4 mb-2">
                     <div class="align-items-center">
-						<img src="{{asset('frontend/img/Homepage_Dirt.jpg')}}" />      
+					<a href="https://dmc-motorsports.com/products/197/Tires">
+						<img src="{{asset('frontend/img/TIRE-dirtbike-tire.jpg')}}" />      
 						<div class="content">
-							<h4 class="text-uppercase m-0"><a href="#"> SHOP DIRT BIKE TIRES </a></h4>
-						</div>	
+							<h4 class="text-uppercase m-0"><a href="https://dmc-motorsports.com/products/197/Tires"> SHOP DIRT BIKE TIRES </a></h4>
+						</div>
+					</a>
                     </div>
                 </div>
                 <div class="col-lg-4 mb-2">
                     <div class="align-items-center">
-                        <img src="{{asset('frontend/img/Homepage_Street.jpg')}}" /> 
+					<a href="https://dmc-motorsports.com/products/199/Tires">
+                        <img src="{{asset('frontend/img/TIRE-street-tire.png')}}" /> 
                         <div class="content">
-							<h4 class="text-uppercase m-0"><a href="#"> SHOP STREET BIKE TIRES </a></h4>
+							<h4 class="text-uppercase m-0"><a href="https://dmc-motorsports.com/products/199/Tires"> SHOP STREET BIKE TIRES </a></h4>
 						</div>
+					</a>	
                     </div>
                 </div>
                 <div class="col-lg-4 mb-2">
                     <div class="align-items-center">
-                        <img src="{{asset('frontend/img/Homepage_ATV.jpg')}}" /> 
+					<a href="https://dmc-motorsports.com/products/193/Tires">
+                        <img src="{{asset('frontend/img/TIRE-atv-tire.jpg')}}" /> 
                         <div class="content">
-							<h4 class="text-uppercase m-0"><a href="#"> SHOP ATV TIRES </a></h4>
+							<h4 class="text-uppercase m-0"><a href="https://dmc-motorsports.com/products/193/Tires"> SHOP ATV TIRES </a></h4>
 						</div>
+					</a>	
                     </div>
                 </div>
             </div>
@@ -158,21 +230,19 @@
     <div class="container-fluid section-info">
             <div class="row my-3">
                 <div class="col-lg-6 px-3">
-                    <div class="bg-secondary align-items-center justify-content-between" style="background:url({{asset('frontend/img/Homepage_ATV.jpg')}});background-size: cover;">
+                    <div class="bg-secondary align-items-center justify-content-between" style="background:url({{asset('frontend/img/upto50per.jpeg')}});background-size: cover;">
                        
                         <div class="text-center">
-                            <h3 class="text-uppercase text-light mb-3">Up To 50% Off Alpinestars</h3>
-                            <p class="mb-4">Lorem justo sit sit ipsum eos lorem kasd, kasd labore</p>
-                            <a class="btn btn-primary py-2 px-4" href="">Shop Now</a>
+                            <h3 class="text-uppercase text-light mb-3">Helmets Up To 50% Off</h3>
+                            <a class="btn btn-primary py-2 px-4" href="https://dmc-motorsports.com/product-category/192">Shop Now</a>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-6 px-3">
-                    <div class="bg-secondary align-items-center justify-content-between" style="background:url({{asset('frontend/img/Homepage_ATV.jpg')}});background-size: cover;">
+                    <div class="bg-secondary align-items-center justify-content-between" style="background:url({{asset('frontend/img/40peroff.jpeg')}});background-size: cover;">
                        
                         <div class="text-center">
-                            <h3 class="text-uppercase text-light mb-3">40% Off! Save Up To ₹‌332,500.00</h3>
-                            <p class="mb-4">Lorem justo sit sit ipsum eos lorem kasd, kasd labore</p>
+                            <h3 class="text-uppercase text-light mb-3">All Things Wheels</h3>
                             <a class="btn btn-primary py-2 px-4" href="">Shop Now</a>
                         </div>
                     
@@ -182,22 +252,20 @@
 			
 			<div class="row my-3">
                 <div class="col-lg-6 px-3">
-                    <div class="bg-secondary align-items-center justify-content-between" style="background:url({{asset('frontend/img/Homepage_ATV.jpg')}});background-size: cover;">
+                    <div class="bg-secondary align-items-center justify-content-between" style="background:url({{asset('frontend/img/suspension-selection.jpg')}});background-size: cover;">
                        
                         <div class="text-center">
-                            <h3 class="text-uppercase text-light mb-3">Women's Riding Gear</h3>
-                            <p class="mb-4">Lorem justo sit sit ipsum eos lorem kasd, kasd labore</p>
+                            <h3 class="text-uppercase text-light mb-3">The Best Suspension Period</h3>
                             <a class="btn btn-primary py-2 px-4" href="">Shop Now</a>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-6 px-3">
-                   <div class=" bg-secondary align-items-center justify-content-between" style="background:url({{asset('frontend/img/Homepage_ATV.jpg')}});background-size: cover;">
+                   <div class=" bg-secondary align-items-center justify-content-between" style="background:url({{asset('frontend/img/yoshi-exhuast-selection.jpg')}});background-size: cover;">
                        
                         <div class="text-center">
-                            <h3 class="text-uppercase text-light mb-3">MotoSport Exclusive Brands</h3>
-                            <p class="mb-4">By Gearheads, For Gearheads</p>
-                            <a class="btn btn-primary py-2 px-4" href="">Read Now</a>
+                            <h3 class="text-uppercase text-light mb-3">Shop Upgraded Exhaust Systems</h3>
+                            <a class="btn btn-primary py-2 px-4" href="">Shop Now</a>
                         </div>
                       
                     </div>
@@ -208,47 +276,144 @@
 	    <div class="container-fluid info-banner">
 	<div class="row ">
                 <div class="col-lg-6 px-3">
-                    <div class="align-items-center justify-content-between" style="background: #F7941D !important">
+                    <div class="align-items-center justify-content-between" style="background:url({{asset('frontend/img/clearance-fly-pic.png')}});background-size: cover;background-color: #00000042;background-blend-mode: multiply;">
                     
                         <div class="text-center" style=" padding: 70px 0px;">
                             <h3 class="text-uppercase text-light mb-3">ALL CLEARANCE</h3>
                             <p class="mb-4">Save up to 77% On Gear & Parts</p>
-                            <a class="btn btn-primary py-2 px-4" href="">Shop Now</a>
+                            <a class="btn btn-primary py-2 px-4" href="https://dmc-motorsports.com/product-grids">Shop Now</a>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-6 px-3">
-                    <div class="align-items-center justify-content-between" style="background: #F7941D !important">
+                    <div class="align-items-center justify-content-between" style="background:url({{asset('frontend/img/new-products-pic.jpeg')}});background-size: cover;background-color: #00000042;background-blend-mode: multiply;">
                         <div class="text-center" style=" padding: 70px 0px;">
-                            <h3 class="text-uppercase text-light mb-3">OEM SALE</h3>
+                            <h3 class="text-uppercase text-light mb-3">New Products</h3>
                             <p class="mb-4">Save up to 40% On Genuine Parts</p>
-                            <a class="btn btn-primary py-2 px-4" href="">Shop Now</a>
+                            <a class="btn btn-primary py-2 px-4" href="https://dmc-motorsports.com/product-grids">Shop Now</a>
                         </div>
                       
                     </div>
                 </div>
             </div>
             </div>
-            <div class="container-fluid py-5">
-        <div class="container pt-5 pb-3">
-            <h2 class="display-5 text-uppercase text-center mb-5">Contact Us</h2>
+			
+	
+	<div class="container-fluid pt-4 mt-5">
+        <div class="container pb-3">
+            <h2 class="display-5 text-uppercase text-center mb-5"> Shop our selection of parts and gear </h2>
+            <div class="row mt-3 shop-parts">
+                <div class="col-lg-3 mb-2">
+                    <div class="align-items-center">
+						<h4> <a href=""> Parts </a> </h4>
+						<ul> 
+							<li><a href="body">Body</a></li>
+							<li><a href="engine">Engine</a></li>
+							<li><a href="exhaust">Exhaust</a></li>
+							<li><a href="drive">Drive</a></li>
+							<li><a href="intake">Intake</a></li>
+							<li><a href="controls">Controls</a></li>
+							<li><a href="brakes">Brakes</a></li>
+							<li><a href="fuel-system">Fuel System</a></li>
+							<li><a href="graphics">Graphics</a></li>
+							<li><a href="tires">Tires</a></li>
+							<li><a href="suspension">Suspension</a></li>
+							<li><a href="crash-protection">Crash Protection</a></li>
+							<li><a href="lights-and-electrical">Lights and Electrical</a></li>
+							<li><a href="windscreens-and-accessories">Windscreens and Accessories</a></li> 
+							<li><a href="windshields-and-accessories">Windshields and Accessories</a></li>
+							<li><a href="farming-and-hunting">Farming and Hunting</a></li> 
+							<li><a href="winch-and-plow">Winch and Plow</a></li> 
+							<li><a href="luggage-and-racks">Luggage and Racks</a></li>
+							<li><a href="wheels-and-rims">Wheels and Rims</a></li> 
+						</ul>
+                    </div>
+                </div>
+                <div class="col-lg-3 mb-2">
+                    <div class="align-items-center">
+                        <h4> <a href=""> Tires </a> </h4>
+						<ul> 
+							<li><a href="/motorcycle/tire-combos">Tire Combos</a></li> 
+							<li><a href="/motorcycle/tires">Tires</a></li> 
+							<li><a href="/motorcycle/wheels">Wheels</a></li> 
+							<li><a href="/motorcycle/tire-and-wheel-accessories">Tire and Wheel Accessories</a></li> 
+							<li><a href="/motorcycle/tire-care">Tire Care</a></li>
+						</ul>
+                    </div>
+                </div>
+                <div class="col-lg-3 mb-2">
+                    <div class="align-items-center">
+                        <h4> <a href=""> Riding Gear </a> </h4>
+						<ul> 
+							<li><a href="pants-jersey-glove-combos">Pants Jersey Glove Combos</a></li>
+							<li><a href="pants">Pants</a></li> 
+							<li><a href="jackets">Jackets</a></li>
+							<li><a href="boots">Boots</a></li> 
+							<li><a href="jerseys">Jerseys</a></li> 
+							<li><a href="gloves">Gloves</a></li> 
+							<li><a href="helmets">Helmets</a></li>
+							<li><a href="goggles-and-accessories">Goggles and Accessories</a></li>
+							<li><a href="protection">Protection</a></li>
+							<li><a href="bags">Bags</a></li> 
+							<li><a href="race-suits">Race Suits</a></li>
+							<li><a href="riding-vests">Riding Vests</a></li>
+							<li><a href="snow-bike-gear">Snow Bike Gear</a></li> 
+							<li><a href="heated-riding-gear">Heated Riding Gear</a></li>
+							<li><a href="rain-gear">Rain Gear</a></li> 
+							<li><a href="/motorcycle/health-and-fitness">Health and Fitness</a></li>
+							<li><a href="womens-riding-gear">Womens Riding Gear</a></li> 
+						</ul>
+                    </div>
+                </div>
+				<div class="col-lg-3 mb-2">
+                    <div class="align-items-center">
+                        <h4> <a href=""> Helmets </a> </h4>
+						<ul> 
+							<li><a href="off-road-helmets">Off Road Helmets</a></li>
+							<li><a href="full-face-helmets">Full Face Helmets</a></li> 
+							<li><a href="dual-sport-helmets">Dual Sport Helmets</a></li>
+							<li><a href="modular-helmets">Modular Helmets</a></li>
+							<li><a href="open-face-helmets">Open Face Helmets</a></li>
+							<li><a href="half-shell-helmets">Half Shell Helmets</a></li> 
+							<li><a href="snell-helmets">Snell Helmets</a></li>
+							<li><a href="helmet-cameras">Helmet Cameras</a></li>
+							<li><a href="communicators-and-accessories">Communicators and Accessories</a></li>
+							<li><a href="helmet-accessories">Helmet Accessories</a></li> 
+							<li><a href="visors-and-shields">Visors and Shields</a></li>
+						</ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+       <div class="container-fluid bg-light pt-4">
+        <div class="container">
+            <h2 class="display-5 text-uppercase text-center mb-3">Contact Us</h2>
             <div class="row">
                 <div class="col-lg-7 mb-2">
-                    <div class="contact-form bg-light mb-4" style="padding: 30px;">
-                        <form>
+                    <div class="contact-form mb-4" style="padding: 30px;">
+                   
+                        <form class="form-contact form contact_form" method="post" action="{{route('contact.store')}}" id="contactForm" novalidate="novalidate">
+                            @csrf
                             <div class="row">
                                 <div class="col-6 form-group">
-                                    <input type="text" class="form-control p-4" placeholder="Your Name" required="required">
+                                    <input type="text" class="form-control p-4" placeholder="Your Name" name="name" required="required">
                                 </div>
                                 <div class="col-6 form-group">
-                                    <input type="email" class="form-control p-4" placeholder="Your Email" required="required">
+                                    <input type="email"  name="email" class="form-control p-4" placeholder="Your Email" required="required">
+                                </div>
+                            </div>
+                            <div class="row">
+                            <div class="col-6 form-group">
+                                <input type="text" name="subject" class="form-control p-4" placeholder="Subject" required="required">
+                            </div>
+                            <div class="col-6 form-group">
+                                    <input type="number"  name="phone" class="form-control p-4" placeholder="Your Phone" required="required">
                                 </div>
                             </div>
                             <div class="form-group">
-                                <input type="text" class="form-control p-4" placeholder="Subject" required="required">
-                            </div>
-                            <div class="form-group">
-                                <textarea class="form-control py-3 px-4" rows="5" placeholder="Message" required="required"></textarea>
+                                <textarea class="form-control py-3 px-4" name="message" rows="5" placeholder="Message" required="required"></textarea>
                             </div>
                             <div>
                                 <button class="btn btn-primary py-3 px-5" type="submit">Send Message</button>
@@ -256,42 +421,79 @@
                         </form>
                     </div>
                 </div>
+                @php
+								$settings=DB::table('settings')->get();
+								
+							@endphp
                 <div class="col-lg-5 mb-2">
                     <div class="bg-secondary d-flex flex-column justify-content-center px-5 mb-4" style="height: 435px;">
                         <div class="d-flex mb-3">
                             <i class="fa fa-3x fa-map-marker text-primary flex-shrink-0 mr-3"></i>
                             <div class="mt-n1">
-                                <h5 class="text-light">Head Office</h5>
-                                <p>123 Street, New York, USA</p>
+                                <h5 class="text-light">Store Location</h5>
+                                <p> @foreach($settings as $data) {{$data->address}} @endforeach</p>
                             </div>
                         </div>
                         <div class="d-flex mb-3">
-                            <i class="fa fa-3x fa-map-marker text-primary flex-shrink-0 mr-3"></i>
+                            <i class="fa fa-3x fa-phone text-primary flex-shrink-0 mr-3"></i>
                             <div class="mt-n1">
-                                <h5 class="text-light">Branch Office</h5>
-                                <p>123 Street, New York, USA</p>
-                            </div>
-                        </div>
-                        <div class="d-flex mb-3">
-                            <i class="fa fa-2x fa-envelope-open text-primary flex-shrink-0 mr-3"></i>
-                            <div class="mt-n1">
-                                <h5 class="text-light">Customer Service</h5>
-                                <p>customer@example.com</p>
+                                <h5 class="text-light">Store Contact</h5>
+                                <p>@foreach($settings as $data) {{$data->phone}} @endforeach</p>
                             </div>
                         </div>
                         <div class="d-flex">
                             <i class="fa fa-2x fa-envelope-open text-primary flex-shrink-0 mr-3"></i>
                             <div class="mt-n1">
-                                <h5 class="text-light">Return & Refund</h5>
-                                <p class="m-0">refund@example.com</p>
+                                <h5 class="text-light">Customer Service</h5>
+                                <p>@foreach($settings as $data) {{$data->email}} @endforeach</p>
                             </div>
                         </div>
+                        <!-- <div class="d-flex">
+                            <i class="fa fa-2x fa-envelope-open text-primary flex-shrink-0 mr-3"></i>
+                            <div class="mt-n1">
+                                <h5 class="text-light">Return & Refund</h5>
+                                <p class="m-0">info@dmc-motorsports.com</p>
+                            </div>
+                        </div> -->
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <!-- Contact End -->
+
+    <div class="modal fade" id="success" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+		  <div class="modal-content">
+			<div class="modal-header">
+				<h2 class="text-success">Thank you!</h2>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p class="text-success">Your message is successfully sent...</p>
+			</div>
+		  </div>
+		</div>
+	</div>
+	
+	<!-- Modals error -->
+	<div class="modal fade" id="error" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+		  <div class="modal-content">
+			<div class="modal-header">
+				<h2 class="text-warning">Sorry!</h2>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p class="text-warning">Something went wrong.</p>
+			</div>
+		  </div>
+		</div>
+	</div>
 @endsection
 
 @push('styles')
@@ -344,6 +546,21 @@ h6,
     padding-right: 0;
     text-align: center;
 }
+
+.modal-dialog .modal-content .modal-header{
+		position:initial;
+		padding: 10px 20px;
+		border-bottom: 1px solid #e9ecef;
+	}
+	.modal-dialog .modal-content .modal-body{
+		height:100px;
+		padding:10px 20px;
+	}
+	.modal-dialog .modal-content {
+		width: 50%;
+		border-radius: 0;
+		margin: auto;
+	}
 @media (max-width: 991.98px) {
     .navbar-dark .navbar-nav .nav-link  {
         padding: 10px 15px;
@@ -564,12 +781,12 @@ h6,
     color: var(--light);
 }
 .bg-banner.one {
-    background: url({{asset('frontend/img/bg-section-one.jpg')}});
+    background: url({{asset('frontend/img/stock-section.jpeg')}});
 	background-size: cover;
 	padding: 80px !important
 }
 .bg-banner.two {
-    background: url({{asset('frontend/img/bg-section-two.jpg')}});
+    background: url({{asset('frontend/img/upgrade-section.jpeg')}});
 	background-size: cover;
 	padding: 80px !important
 }
@@ -644,11 +861,41 @@ h6,
 .info-banner .btn-primary:hover {
     background: #000;
 }
+.time-tire img {
+    height: 300px;
+}
+ul.partner-logo img {
+    padding: 0px 20px;
+}
+.categories img {
+    height: 330px;
+    object-fit: cover;
+}
+.carousel-caption.e-bike {
+    position: absolute;
+    top: 149px;
+    padding: 0px !important;
+    left: 12% !important;
+}
+.carousel-caption.e-bike.bg-banner .py-2 {
+    background: #000000b0;
+    width: 40%;
+    margin: 0px;
+    padding: 25px 0px !important;
+}
+ul.partner-logo img {
+    width: 180px;
+    height: 50px;
+    object-fit: scale-down;
+}
     </style>
 @endpush
 
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
+<script src="{{ asset('frontend/js/jquery.form.js') }}"></script>
+<script src="{{ asset('frontend/js/jquery.validate.min.js') }}"></script>
+<script src="{{ asset('frontend/js/contact.js') }}"></script>
     <script>
 
         /*==================================================================

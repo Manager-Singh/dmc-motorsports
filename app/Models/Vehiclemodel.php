@@ -29,4 +29,11 @@ class Vehiclemodel extends Model
 
         return $record;
     }
+    public function vehiclemake(){
+        return $this->belongsTo('App\Models\Vehiclemake','vehiclemake_id','wps_id');
+    }
+    public function categories()
+    {
+        return $this->belongsToMany('App\Models\Category', 'vehiclemodel_categories', 'vehiclemodel_id', 'category_id');
+    }
 }

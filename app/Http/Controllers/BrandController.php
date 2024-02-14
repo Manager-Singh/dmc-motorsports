@@ -46,6 +46,7 @@ class BrandController extends Controller
             $slug=$slug.'-'.date('ymdis').'-'.rand(0,999);
         }
         $data['slug']=$slug;
+        $data['wps_id']=genrateWpsId();
         // return $data;
         $status=Brand::create($data);
         if($status){

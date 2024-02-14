@@ -24,7 +24,7 @@
     <!-- Start Checkout -->
     <section class="shop checkout section">
         <div class="container">
-                <form class="form" method="POST" action="{{route('cart.order')}}">
+                <form class="form" method="POST" action="{{route('cart.order')}}" id="frmStripePayment1">
                     @csrf
                     <div class="row"> 
 
@@ -34,10 +34,13 @@
                                 <p>Please register in order to checkout more quickly</p>
                                 <!-- Form -->
                                 <div class="row">
+                                @php
+                                $name = explode(' ',auth()->user()->name);
+                                @endphp
                                     <div class="col-lg-6 col-md-6 col-12">
                                         <div class="form-group">
                                             <label>First Name<span>*</span></label>
-                                            <input type="text" name="first_name" placeholder="" value="{{old('first_name')}}" value="{{old('first_name')}}">
+                                            <input type="text" name="first_name" placeholder="" value="{{@$name[0]}}">
                                             @error('first_name')
                                                 <span class='text-danger'>{{$message}}</span>
                                             @enderror
@@ -46,7 +49,7 @@
                                     <div class="col-lg-6 col-md-6 col-12">
                                         <div class="form-group">
                                             <label>Last Name<span>*</span></label>
-                                            <input type="text" name="last_name" placeholder="" value="{{old('lat_name')}}">
+                                            <input type="text" name="last_name" placeholder="" value="{{@$name[1]}}">
                                             @error('last_name')
                                                 <span class='text-danger'>{{$message}}</span>
                                             @enderror
@@ -55,7 +58,7 @@
                                     <div class="col-lg-6 col-md-6 col-12">
                                         <div class="form-group">
                                             <label>Email Address<span>*</span></label>
-                                            <input type="email" name="email" placeholder="" value="{{old('email')}}">
+                                            <input type="email" name="email" placeholder="" value="{{auth()->user()->email}}">
                                             @error('email')
                                                 <span class='text-danger'>{{$message}}</span>
                                             @enderror
@@ -317,6 +320,7 @@
                                                 <option value="UA">Ukraine</option>
                                                 <option value="AE">United Arab Emirates</option>
                                                 <option value="Uk">United Kingdom</option>
+                                                <option value="US">United State</option>
                                                 <option value="UY">Uruguay</option>
                                                 <option value="UM">U.S. Minor Outlying Islands</option>
                                                 <option value="VI">U.S. Virgin Islands</option>
@@ -380,26 +384,17 @@
                                         <ul>
 										    <li class="order_subtotal" data-price="{{Helper::totalCartPrice()}}">Cart Subtotal<span>${{number_format(Helper::totalCartPrice(),2)}}</span></li>
                                             <li class="shipping">
+
                                                 Shipping Cost
-                                                @if(Helper::shipping())
-                                                @if($total_amount<=150)
+                                                @if(Helper::shipping() || Helper::checkIfCartHasItemswithTires()>0)
+                                                @if($total_amount<=150 || Helper::checkIfCartHasItemswithTires()>0)
                                                 <span value="{{Helper::shipping()->id}}" class="shippingOption" data-price="{{Helper::shipping()->price}}">${{number_format(Helper::shipping()->price,2)}}</span>
-                                                @elseif($total_amount>150)
-                                                <span>Free</span>
-                                                @endif
+                                               
                                                 @else 
                                                     <span>Free</span>
                                                 @endif
-                                                {{-- @if(count(Helper::shipping())>0 && Helper::cartCount()>0)
-                                                    <select name="shipping" class="nice-select">
-                                                        <option value="">Select your address</option>
-                                                        @foreach(Helper::shipping() as $shipping)
-                                                        <option value="{{$shipping->id}}" class="shippingOption" data-price="{{$shipping->price}}">{{$shipping->type}}: ${{$shipping->price}}</option>
-                                                        @endforeach
-                                                    </select>
-                                                @else 
-                                                    <span>Free</span>
-                                                @endif --}}
+                                                @endif
+                                               
                                             </li>
                                             
                                             @if(session('coupon'))
@@ -421,11 +416,64 @@
                                     <div class="content">
                                         <div class="checkbox">
                                             <form-group>
-                                                <input name="payment_method" class="payment-method cash" type="radio" value="cod" checked> <label> Cash On Delivery</label><br>
-                                                <input name="payment_method" class="payment-method stripe" type="radio" value="stripe"> <label> Stripe</label> 
-                                                <input name="payment_method" class="payment-method paypal" type="radio" value="paypal"> <label> Paypal</label> 
+                                                <input name="payment_method" class="payment-method cash" type="radio" value="cod"> <label> Cash On Delivery</label><br>
+                                                <input name="payment_method" class="payment-method stripe" type="radio" value="stripe" checked> <label> Online</label> 
+                                                <!-- <input name="payment_method" class="payment-method paypal" type="radio" value="paypal" checked> <label> Paypal</label>  -->
                                             </form-group>
-                                            
+                                            <div class="card-details">
+                                                <div id="error-message">
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                    <label for="exampleInputEmail1">Card Number</label>
+                                                    <input type="text" class="form-control" id="card-number" name="cardnumber" placeholder="Card Number">
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                    <label for="exampleInputPassword1">Month</label>
+                                                    <select class="form-control" name="month" id="month">
+                                                        <option value="">MM</option>
+                                                        <option value="01">01</option>
+                                                        <option value="02">02</option>
+                                                        <option value="03">03</option>
+                                                        <option value="04">04</option>
+                                                        <option value="05">05</option>
+                                                        <option value="06">06</option>
+                                                        <option value="07">07</option>
+                                                        <option value="08">08</option>
+                                                        <option value="09">09</option>
+                                                        <option value="10">10</option>
+                                                        <option value="11">11</option>
+                                                        <option value="12">12</option>
+                                                    </select>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                    <label for="exampleInputPassword1">Year</label>
+                                                    <select class="form-control" name="year" id="year">
+                                                        <option value="">YY</option>
+                                                        <option value="2024">2024</option>
+                                                        <option value="2025">2025</option>
+                                                        <option value="2026">2026</option>
+                                                        <option value="2027">2027</option>
+                                                        <option value="2027">2028</option>
+                                                        <option value="2027">2029</option>
+                                                        <option value="2027">2030</option>
+                                                        <option value="2027">2031</option>
+                                                        <option value="2027">2031</option>
+                                                        <option value="2027">2033</option>
+                                                        <option value="2027">2034</option>
+                                                        <option value="2027">2035</option>
+                                                        <option value="2027">2036</option>
+                                                        <option value="2027">2037</option>
+                                                    </select>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                    <label for="exampleInputPassword1">CVV</label>
+                                                    <input type="text" name="cvc" placeholder="CVV" id="cvc" class="form-control">
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -441,9 +489,9 @@
                                 <div class="single-widget get-button">
                                     <div class="content">
                                         <div class="button">
-                                        <button type="button" class="btn btn-primary btn-block btn-stripe" id="checkout-button" style="display:none">proceed to checkout ${{number_format($total_amount,2)}}</button>
+                                        <button type="button" class="btn btn-primary btn-block btn-stripe" id="checkout-button" onClick="stripePay(event);" style="display:block">proceed to checkout</button>
                                         
-                                        <button type="submit" class="btn btn-cod-pay">proceed to checkout</button>
+                                        <button type="submit" class="btn btn-cod-pay" style="display:none">proceed to checkout</button>
                                         </div>
                                     </div>
                                 </div>
@@ -568,108 +616,95 @@
 	</style>
 @endpush
 @push('scripts')
-<script src="https://js.stripe.com/v3/"></script>
+<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
 	<script src="{{asset('frontend/js/nice-select/js/jquery.nice-select.min.js')}}"></script>
 	<script src="{{ asset('frontend/js/select2/js/select2.min.js') }}"></script>
-    
-    <!-- <script type="text/javascript">
-        var stripe = Stripe("{{ env('STRIPE_KEY') }}");
-        var checkoutButton = document.getElementById("checkout-button");
-        checkoutButton.addEventListener("click", function () {
-            fetch("{{ route('payment.stripe') }}", {
-                method: "POST",
-            })
-            .then(function (response) {
-                return response.json();
-            })
-            .then(function (session) {
-                return stripe.redirectToCheckout({ sessionId: session.id });
-            })
-            .then(function (result) {
-                if (result.error) {
-                    alert(result.error.message);
-                }
-            })
-            .catch(function (error) {
-                console.error("Error:", error);
-            });
-        });
-    </script> -->
-    <script type="text/javascript">
-    var stripe = Stripe("{{ env('STRIPE_KEY') }}");
-    var checkoutButton = document.getElementById("checkout-button");
+  
 
-    checkoutButton.addEventListener("click", function () {
-        // Perform client-side validation
-        if (validateForm()) {
-            // If validation passes, proceed with AJAX request
-            sendPaymentRequest();
-        }
-    });
-
-    function validateForm() {
-        // Implement your form validation logic here
-        // Return true if validation passes, false otherwise
-
-        // Example validation (you can customize this according to your needs)
-        var firstName = document.getElementsByName("first_name")[0].value;
-        var lastName = document.getElementsByName("last_name")[0].value;
-        var email = document.getElementsByName("email")[0].value;
-    
-        var phone = document.getElementsByName("phone")[0].value;
-        var address1 = document.getElementsByName("address1")[0].value;
-
-      
-            if (!firstName || !lastName || !email || !phone || !address1) {
-                alert("Please fill in all required fields.");
-                return false;
-            }
-        
-       
-
-        return true;
-    }
-
-    function sendPaymentRequest() {
-        fetch("{{ route('payment.stripe') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
-            },
-            body: JSON.stringify(getFormData())
-        })
-        .then(function (response) {
-            return response.json();
-        })
-        .then(function (session) {
-            return stripe.redirectToCheckout({ sessionId: session.id });
-        })
-        .then(function (result) {
-            if (result.error) {
-                alert(result.error.message);
-            }
-        })
-        .catch(function (error) {
-            console.error("Error:", error);
-        });
-    }
-
-    function getFormData() {
-        // Collect form data and return as an object
-        var formData = {};
-        var formElements = document.getElementsByClassName("form")[0].elements;
-
-        for (var i = 0; i < formElements.length; i++) {
-            formData[formElements[i].name] = formElements[i].value;
-        }
-
-        return formData;
-    }
-</script>
 	<script>
 		$(document).ready(function() { $("select.select2").select2(); });
   		$('select.nice-select').niceSelect();
+
+
+
+          $('#card-number').on('keypress change', function() {
+            $(this).val(function(index, value) {
+                return value.replace(/\W/gi, '').replace(/(.{4})/g, '$1 ');
+            });
+        });
+
+    function cardValidation() {
+            var valid = true;
+            var membershipid = 1;
+            var cardNumber = $.trim($('#card-number').val());
+            var month = $.trim($('#month').val());
+            var year = $.trim($('#year').val());
+            var cvc = $.trim($('#cvc').val());
+            if (cardNumber == "") {
+                valid = false;
+            }
+            if (month == "") {
+                valid = false;
+            }
+            if (year == "") {
+                valid = false;
+            }
+            if (cvc == "") {
+                valid = false;
+            }
+            $("#error-message").html("").hide();
+            if (valid == false) {
+                $("#error-message").html("<p style='color:red;'>Card Details are required</p>").show();
+            }
+            return valid;
+        }
+        //set your publishable key
+
+        Stripe.setPublishableKey("<?php echo env('STRIPE_KEY'); ?>");
+        //callback to handle the response from stripe
+        function stripeResponseHandler(status, response) {
+            if (response.error) {
+                //enable the submit button
+                $("#submit-btn").show();
+                $("#loader").css("display", "none");
+                //display the errors on the form
+                $("#error-message").html("<p>"+response.error.message+"</p>").show();
+                return false;
+            } else {
+                //get token id
+                var token = response['id'];
+                console.log(token);
+                //insert the token into the form
+                $("#frmStripePayment1").append("<input type='hidden' name='stoken' value='" + token + "' />");
+                //submit form to the server
+                $("#frmStripePayment1").submit();
+            }
+        }
+
+        function stripePay(e) {
+            e.preventDefault();
+            var valid = cardValidation();
+            if (valid==true) {
+                $("#submit-btn").hide();
+                $("#loader").css("display", "inline-block");
+                var payment_option = 1;
+                if(payment_option == 1){
+                    Stripe.createToken({
+                        number: $.trim($('#card-number').val()),
+                        cvc: $.trim($('#cvc').val()),
+                        exp_month: $('#month').val(),
+                        exp_year: $('#year').val()
+                    }, stripeResponseHandler);
+                }else{
+                    $("#frmStripePayment1").submit();
+                }
+                //submit from callback
+                return false;
+            }else{
+                return false;
+            }
+        }
+
 	</script>
 	<script>
 		function showMe(box){
@@ -700,11 +735,12 @@
                //alert('Selected value: ' + selectedValue);
                console.log(selectedValue);
                 if(selectedValue=='stripe'){
-                    
+                    $('.card-details').show();
                     $('.btn-cod-pay').hide();
                     $('.btn-stripe').show();
                     
                 }else{
+                    $('.card-details').hide();
                     $('.btn-stripe').hide();
                     $('.btn-cod-pay').show();
                     

@@ -16,7 +16,7 @@
             <th>Name</th>
             <th>Email</th>
             <th>Quantity</th>
-            {{-- <th>Charge</th> --}}
+           <th>Charge</th>
             <th>Total Amount</th>
             <th>Status</th>
             <th>Action</th>
@@ -29,7 +29,11 @@
             <td>{{$order->first_name}} {{$order->last_name}}</td>
             <td>{{$order->email}}</td>
             <td>{{$order->quantity}}</td>
-            {{-- <td>${{$order->shipping->price}}</td> --}}
+            @if($order->shipping)
+                        <td>${{@$order->shipping->price}}</td>
+                        @else
+                        <td>Free</td>
+                        @endif
             <td>${{number_format($order->total_amount,2)}}</td>
             <td>
                 @if($order->status=='new')
@@ -77,25 +81,42 @@
                         <td>Order Status</td>
                         <td> : {{$order->status}}</td>
                     </tr>
-                    {{-- <tr>
-                      @php
-                          $shipping_charge=DB::table('shippings')->where('id',$order->shipping_id)->pluck('price');
-                      @endphp
+                    <tr>
+                        <td>Tracking Number</td>
+                        <td> : {{$order->tracking_number}}</td>
+                    </tr>
+                    <tr>
+                        <td>Tracking Url</td>
+                        <td> : {{$order->tracking_url}}</td>
+                    </tr>
+                    <tr>
+                     
                         <td>Shipping Charge</td>
-                        <td> :${{$order->shipping->price}}</td>
-                    </tr> --}}
+                        @if($order->shipping)
+                        <td> :${{@$order->shipping->price}}</td>
+                        @else
+                        <td> : Free</td>
+                        @endif
+                    </tr>
                     <tr>
                         <td>Total Amount</td>
                         <td> : $ {{number_format($order->total_amount,2)}}</td>
                     </tr>
                     <tr>
-                      <td>Payment Method</td>
-                      <td> : @if($order->payment_method=='cod') Cash on Delivery @else Paypal @endif</td>
+                        <td>Payment Method</td>
+                        <td> : @if($order->payment_method=='cod') Cash on Delivery @elseif($order->payment_method=='stripe') Online @else Online @endif</td>
                     </tr>
+                    @if($order->payment_method=='stripe' && $order->payment_status=='paid')
+                    <tr>
+                        <td>Tranction ID</td>
+                        <td> : {{$order->transaction_id}}</td>
+                    </tr>
+                    @endif
                     <tr>
                         <td>Payment Status</td>
                         <td> : {{$order->payment_status}}</td>
                     </tr>
+                    
               </table>
             </div>
           </div>
@@ -131,12 +152,61 @@
               </table>
             </div>
           </div>
+          <div class="col-lg-12">
+          @php
+             // print_r($order->cart_info);
+          @endphp
+          <h4 class="text-center pb-4">ITEMS INFORMATION</h4>
+          <table class="table shopping-summery">
+						<thead>
+							<tr class="main-hading">
+								<th>PRODUCT</th>
+								<th>NAME</th>
+								<th class="text-center">UNIT PRICE</th>
+								<th class="text-center">QUANTITY</th>
+								<th class="text-center">TOTAL</th>
+							</tr>
+						</thead>
+
+            <tbody id="cart_item_list">
+							
+                @foreach($order->cart_info as $cart)
+										<tr>
+											@if(isset($cart->product->images))
+											@if($cart->product->images[0]->domain == 'dmc-motorsports.com')
+											@php
+											$fimg_url = 'https://'.$cart->product->images[0]->domain.$cart->product->images[0]->path.'/'.$cart->product->images[0]->filename;
+											@endphp
+											@else
+											@php
+											$fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$cart->product->images[0]->filename;
+											@endphp
+											@endif
+											@endif
+											<td class="image" data-title="No"><img src="{{$fimg_url}}" alt="{{$fimg_url}}" width="200" height="150"></td>
+											<td class="product-des" data-title="Description">
+												<p class="product-name"><a href="{{route('product-detail',$cart->product->slug)}}" target="_blank">{{$cart->product->name}}</a></p>
+												<p class="product-brand"><span>Brand:</span> {{$cart->product->brand->title}}</p>
+												<p class="product-sku"><span>SKU:</span> {{$cart->product->sku}}</p>
+											</td>
+											<td class="price" data-title="Price"><span>${{number_format($cart['price'],2)}}</span></td>
+											<td class="qty" data-title="Qty"><!-- Input Order -->
+                      {{$cart->quantity}}
+												<!--/ End Input Order -->
+											</td>
+											<td class="total-amount cart_single_price" data-title="Total"><span class="money">${{$cart['amount']}}</span></td>
+
+										
+										</tr>
+									@endforeach
+						</tbody>
+					</table>
+          
+          </div>
         </div>
       </div>
     </section>
-    @php
-        print_r($order->cart_info);
-    @endphp
+    
     @endif
 
   </div>

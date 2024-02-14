@@ -4,14 +4,38 @@
 
 @section('main-content')
 	<!-- Breadcrumbs -->
+      <div class="container-fluid bg-white pt-3 px-lg-5" style="background: #ededed !important;">
+        
+    @include('frontend.partials.search')
+    </div>
     <div class="breadcrumbs">
         <div class="container">
             <div class="row">
                 <div class="col-12">
                     <div class="bread-inner">
                         <ul class="bread-list">
-                            <li><a href="index1.html">Home<i class="ti-arrow-right"></i></a></li>
-                            <li class="active"><a href="blog-single.html">Shop Grid</a></li>
+                            <li><a href="{{route('home')}}">Home<i class="ti-arrow-right"></i></a></li>
+                            <li class="active">
+                                @if(isset($product_category) || isset($product_brand) || isset($product_type) || isset($term))
+                                
+                                @if(isset($product_category))
+                                
+                                {{Helper::getCategoryName($product_category)}}
+                                @endif
+                                @if(isset($product_brand) )
+                                
+                                {{Helper::getBrandName($product_brand)}}
+                                @endif
+                                @if(isset($product_type))
+                                {{$product_type}}
+                                @endif
+                                @if(isset($term))
+                                {{$term}}
+                                @endif
+                                @else
+                                Shop Grid
+                                @endif
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -28,36 +52,8 @@
                 <div class="row">
                     <div class="col-lg-3 col-md-4 col-12">
                         <div class="shop-sidebar">
-                                <!-- Single Widget -->
-                                <div class="single-widget category">
-                                    <h3 class="title">Categories</h3>
-                                    <ul class="categor-list">
-										@php
-											// $category = new Category();
-											$menu=App\Models\Category::has('items')->where('status','active')->where('is_parent',1)->orderBy('title','ASC')->get();
-										@endphp
-										@if($menu)
-										<li>
-											@foreach($menu as $cat_info)
-                                          
-														<li><a href="{{route('new-product-cat',$cat_info->wps_id)}}">{{$cat_info->title}}</a>
-															
-														</li>
-                                                   
-													
-											@endforeach
-										</li>
-										@endif
-                                        {{-- @foreach(Helper::productCategoryList('products') as $cat)
-                                            @if($cat->is_parent==1)
-												<li><a href="{{route('product-cat',$cat->wps_id)}}">{{$cat->title}}</a></li>
-											@endif
-                                        @endforeach --}}
-                                    </ul>
-                                </div>
-                                <!--/ End Single Widget -->
-                                <!-- Shop By Price -->
-                                    <div class="single-widget range">
+                             <!-- Shop By Price -->
+                             <div class="single-widget range">
                                         <h3 class="title">Shop by Price</h3>
                                         <div class="price-filter">
                                             <div class="price-filter-inner">
@@ -79,6 +75,35 @@
 
                                     </div>
                                     <!--/ End Shop By Price -->
+                                <!-- Single Widget -->
+                                <div class="single-widget category">
+                                    <h3 class="title">Categories</h3>
+                                    <ul class="categor-list">
+										@php
+											// $category = new Category();
+											$menu=App\Models\Category::has('items')->where('vocabulary_id',15)->where('status','active')->where('is_parent',1)->orderBy('title','ASC')->get();
+										@endphp
+										@if($menu)
+										<li>
+											@foreach($menu as $cat_info)
+                                          
+														<li><a href="{{route('new-product-cat',$cat_info->wps_id)}}">{{$cat_info->title}}</a>
+															
+														</li>
+                                                   
+													
+											@endforeach
+										</li>
+										@endif
+                                        {{-- @foreach(Helper::productCategoryList('products') as $cat)
+                                            @if($cat->is_parent==1)
+												<li><a href="{{route('product-cat',$cat->wps_id)}}">{{$cat->title}}</a></li>
+											@endif
+                                        @endforeach --}}
+                                    </ul>
+                                </div>
+                                <!--/ End Single Widget -->
+                               
                                 <!-- Single Widget -->
                               {{--  <div class="single-widget recent-post">
                                     <h3 class="title">Recent Items</h3>
@@ -106,7 +131,7 @@
                                 </div>--}}
                                 <!--/ End Single Widget -->
                                 <!-- Single Widget -->
-                               {{-- <div class="single-widget category">
+                             <div class="single-widget category">
                                     <h3 class="title">Brands</h3>
                                     <ul class="categor-list">
                                         @php
@@ -116,7 +141,7 @@
                                             <li><a href="{{route('product-brand',$brand->wps_id)}}">{{$brand->title}}</a></li>
                                         @endforeach
                                     </ul>
-                                </div>--}}
+                                </div>
                                 <!--/ End Single Widget -->
                         </div>
                     </div>
@@ -156,13 +181,21 @@
                             </div>
                         </div>--}}
                         <div class="row">
-                            {{-- {{$products}} --}}
                             @if(count($products)>0)
                                 @foreach($products as $product)
                                     <div class="col-lg-4 col-md-6 col-12">
-                                        <div class="single-product">
+                                        <div class="single-product {{$product->wps_id}}">
+                                            @php
+
+                                            //print_r($product_detail->inventory);
+                                            $inventory  = getInventory($product->wps_id)
+                                            @endphp
+                                            <p class="availability">@if($inventory>0)<span class="badge badge-success">In Stock</span>@else <span class="badge badge-danger">Out Of Stock</span>  @endif</p>
+                                        
                                             <div class="product-img">
+                                               
                                                 <a href="{{route('product-detail',$product->slug)}}">
+                                                  
                                                     {{-- @php
                                                         $photo=explode(',',$product->photo);
                                                     @endphp --}}
@@ -170,9 +203,14 @@
                                                     @php
                                                         // $photo=explode(',',$cat->photo);
                                                         // // dd($photo);
-                                                        $f_item_image = $product->images[0];
+                                                        $image = $product->images[0];
                                           // print_r($f_item_image);
-                                                $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$f_item_image->filename;
+                                              //  $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$image->filename;
+                                              if($image->domain == 'dmc-motorsports.com'){
+                                                    $fimg_url = 'https://'.$image->domain.$image->path.'/'.$image->filename;
+                                                }else{
+                                                    $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$image->filename;
+                                                }
                                                         
                                                     @endphp
                                                     @else
@@ -197,7 +235,7 @@
                                                 </div>
                                             </div>
                                             <div class="product-content">
-                                                <h3><a href="{{route('product-detail',$product->slug)}}">{{$product->name}}</a></h3>
+                                                <h3><a href="{{route('product-detail',$product->slug)}}">@if(isset($product->brand))<span class="brand-title">{{$product->brand->title}}</span> @endif {{$product->name}}</a></h3>
                                                 @php
                                                     $after_discount=($product->list_price-($product->list_price*$product->discount)/100);
                                                 @endphp
@@ -391,6 +429,13 @@
         margin-top:10px;
         color: white;
     }
+    span.brand-title {
+    font-weight: 700;
+}
+.shop-sidebar .single-widget {
+    overflow-x: hidden;
+    height: 328px;
+}
 </style>
 @endpush
 @push('scripts')

@@ -15,6 +15,8 @@ use App\Models\Vehicle;
 use App\Models\ItemVehicle;
 use App\Models\Vehicleyear;
 use App\Models\Item;
+use App\Models\Image;
+use App\Models\ItemImage;
 use App\Models\VehiclemodelCategory;
 use App\Models\ItemCategory;
 use App\Models\Attributevalue;
@@ -67,8 +69,8 @@ class FrontendController extends Controller
         $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
         ->groupBy('category_id')
         ->get();
-        
-        return view('frontend.new-index')->with('vehicle_model_categories',$vehicle_model_categories);
+        $banners=Banner::where('status','active')->limit(3)->orderBy('id','DESC')->get();
+        return view('frontend.new-index')->with('banners',$banners)->with('vehicle_model_categories',$vehicle_model_categories);
     }
     public function loadMore(Request $request)
     {
@@ -107,6 +109,33 @@ class FrontendController extends Controller
     // Return the options as JSON
     return response()->json(['options' => $options]);
     }
+    public function getVehicles(Request $request)
+    {
+    //   print_r($request->input('q'));
+    //   die;
+        $searchKeyword = $request->input('q');
+        $item_id = $request->input('item_id');
+        $items=Item::with('vehicles',)->where('wps_id',$item_id)->first();
+       
+         //  print_r($vehicle_ids);
+     // die;
+        $vehicles = Vehicle::with('vehiclemodel', 'vehicleyear', 'vehiclemodel.vehiclemake')
+        ->where(function ($query) use ($searchKeyword) {
+            $query->whereHas('vehiclemodel', function ($query) use ($searchKeyword) {
+                $query->where('name', 'LIKE', '%' . $searchKeyword . '%');
+            });
+        });
+        if(isset($items->vehicles)){
+            $vehicle_ids = $items->vehicles->pluck('wps_id');
+            $vehicles->whereNotIn('wps_id', $vehicle_ids);
+
+        }
+        $vehicles->take(1000);
+        $mvevehicles = $vehicles->get()->toArray();
+
+    return response()->json($mvevehicles);
+    }
+    
     public function getVehicleModels(Request $request)
     {
         // Get the car maker ID from the request
@@ -149,6 +178,17 @@ class FrontendController extends Controller
     
     public function searchItems(Request $request)
     {
+
+        // print_r($request->options);
+        // die;
+        if(isset($request->page)){
+            $page=$request->page;
+        }else{
+            $page=1;
+        }
+        
+        $product_types = Item::pluck('product_type','product_type');
+       // print_r($product_types);
         if($request->isMethod('post')){
             
         $vehicle_category = $request->vehicle_category;
@@ -167,7 +207,26 @@ class FrontendController extends Controller
         }
     
         $vehicles = $query->pluck('wps_id');
-        $allItems = ItemVehicle::has('item')->with(['item', 'item.brand', 'item.country', 'item.categories'])->whereIn('vehicle_id', $vehicles)->paginate(12);
+        $item_ids = ItemVehicle::whereIn('vehicle_id', $vehicles)->pluck('item_id');
+        $allItem = Item::with(['brand', 'country', 'categories'])->whereIn('wps_id', $item_ids);
+       // $allItem->whereIn('wps_id', $item_ids);
+        if (isset($request->options)){
+            $narray = [];
+            $arrayOptions = explode(",", $request->options);
+            foreach( $arrayOptions as  $arrayOption){
+                $ovalue = str_replace('~', '/', $arrayOption);
+                $ovalue = str_replace('_', ' ', $ovalue);
+                $ovalue = str_replace('|', '&', $ovalue);
+                array_push($narray, $ovalue);
+            }
+            // print_r($narray);
+            // die;
+        $allItem->whereIn('product_type', $narray);
+        }
+        $allItems = $allItem->paginate(12);
+
+      
+        // has('item')->with(['item', 'item.brand', 'item.country', 'item.categories'])->
         $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
         ->groupBy('category_id')
         ->get();
@@ -175,45 +234,122 @@ class FrontendController extends Controller
         $cat_name = Category::where('wps_id',$vehicle_category)->first()->title;
         $v_make_name = Vehiclemake::where('wps_id',$vehicle_maker)->first()->name;
         $v_model_name = Vehiclemodel::where('wps_id',$vehicle_model)->first()->name;
-        $v_year_name = Vehicleyear::where('wps_id',$vehicle_year)->first()->name;
+        if(isset($vehicle_year)){
+            $v_year_named = Vehicleyear::where('wps_id',$vehicle_year)->first();
+            if($v_year_named){
+                $v_year_name = $v_year_named->name;
+            }else{
+                $v_year_name ='';
+            }
+            
 
+        }else{
+            $v_year_name ='';
+        }
+
+        $pagination = $allItems->appends ( array (
+            'vehicle_category' => $vehicle_category,
+            'vehicle_maker' => $vehicle_maker,
+            'vehicle_model' => $vehicle_model,
+            'vehicle_year' => $vehicle_year,
+            'options'=>$request->options,
+          ) );
+
+        $search_bred =''; 
+        $search_bred .= '<li>'.$cat_name.'<i class="ti-arrow-right"></i></li>';
+        $search_bred .= '<li>'.$v_make_name.'<i class="ti-arrow-right"></i></li>';
+        $search_bred .= '<li>'.$v_model_name.'<i class="ti-arrow-right"></i></li>';
+        if(isset($vehicle_year)){
+            $search_bred .= '<li>'.$v_year_name.'</li>';
+
+        }
+       
+        return view('frontend.search-items')
+        ->with('vehicle_maker', $vehicle_maker)
+        ->with('vehicle_model', $vehicle_model)
+        ->with('vehicle_year', $vehicle_year)
+        ->with('vehicle_category', $request->vehicle_category)
+        ->with('product_types', $product_types)
+        ->with('vehicle_model_categories',$vehicle_model_categories)
+        ->with('search_bred',$search_bred)
+        ->with('options',$request->options)
+        ->with('page',$page)
+        ->with('allItems', $allItems);
+       
+    }else{
+
+        // print_r($request->all());
+        // die;
+        
+     
+        $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
+        ->groupBy('category_id')
+        ->get();
+        $query = Vehicle::with(['vehicleyear', 'vehiclemodel', 'items', 'items.brand', 'items.country', 'items.categories']);
+    
+        if ($request->vehicle_model) {
+            $query->where('vehiclemodel_id', $request->vehicle_model);
+        }
+    
+        if ($request->vehicle_year) {
+            $query->where('vehicleyear_id', $request->vehicle_year);
+        }
+    
+        $vehicles = $query->pluck('wps_id');
+        //$allItems = ItemVehicle::has('item')->with(['item', 'item.brand', 'item.country', 'item.categories'])->whereIn('vehicle_id', $vehicles);
+       
+        $item_ids = ItemVehicle::whereIn('vehicle_id', $vehicles)->pluck('item_id');
+        $allItem = Item::with(['brand', 'country', 'categories'])->whereIn('wps_id', $item_ids);
+        //$allItem->whereIn('wps_id', $item_ids);
+        if(isset($request->options)){
+            $narray = [];
+            $arrayOptions = explode(",", $request->options);
+            foreach( $arrayOptions as  $arrayOption){
+                $ovalue = str_replace('~', '/', $arrayOption);
+                $ovalue = str_replace('_', ' ', $ovalue);
+                array_push($narray, $ovalue);
+            }
+            // print_r($narray);
+            // die;
+            
+        $allItem->whereIn('product_type', $narray);
+        }
+        $allItems = $allItem->paginate(12, ['*'], 'page', $page);
+
+        // print_r($allItems);
+        // if($allItems){
+        //     return view('frontend.partials.vechile-items', compact('allItems'))->render();
+        // }else{
+        //     return "";
+        // }
+        $cat_name = Category::where('wps_id',$request->vehicle_category)->first()->title;
+        $v_make_name = Vehiclemake::where('wps_id',$request->vehicle_maker)->first()->name;
+        $v_model_name = Vehiclemodel::where('wps_id',$request->vehicle_model)->first()->name;
+        $v_year_name = Vehicleyear::where('wps_id',$request->vehicle_year)->first()->name;
+
+        $pagination = $allItems->appends ( array (
+            'vehicle_category' => $request->vehicle_category,
+            'vehicle_maker' => $request->vehicle_maker,
+            'vehicle_model' => $request->vehicle_model,
+            'vehicle_year' => $request->vehicle_year,
+            'options'=>$request->options,
+          ) );
         $search_bred =''; 
         $search_bred .= '<li>'.$cat_name.'<i class="ti-arrow-right"></i></li>';
         $search_bred .= '<li>'.$v_make_name.'<i class="ti-arrow-right"></i></li>';
         $search_bred .= '<li>'.$v_model_name.'<i class="ti-arrow-right"></i></li>';
         $search_bred .= '<li>'.$v_year_name.'</li>';
         return view('frontend.search-items')
-        ->with('vehicle_maker', $vehicle_maker)
-        ->with('vehicle_model', $vehicle_model)
-        ->with('vehicle_year', $vehicle_year)
+        ->with('vehicle_maker', $request->vehicle_maker)
+        ->with('vehicle_model', $request->vehicle_model)
+        ->with('vehicle_year', $request->vehicle_year)
+        ->with('vehicle_category', $request->vehicle_category)
+        ->with('product_types', $product_types)
         ->with('vehicle_model_categories',$vehicle_model_categories)
         ->with('search_bred',$search_bred)
+        ->with('options',$request->options)
+        ->with('page',$page)
         ->with('allItems', $allItems);
-       
-    }else{
-        $page=$request->page;
-        $vehicle_maker = $request->vehicle_maker;
-        $vehicle_model = $request->vehicle_model;
-        $vehicle_year = $request->vehicle_year;
-    
-        $query = Vehicle::with(['vehicleyear', 'vehiclemodel', 'items', 'items.brand', 'items.country', 'items.categories']);
-    
-        if ($vehicle_model) {
-            $query->where('vehiclemodel_id', $vehicle_model);
-        }
-    
-        if ($vehicle_year) {
-            $query->where('vehicleyear_id', $vehicle_year);
-        }
-    
-        $vehicles = $query->pluck('wps_id');
-        $allItems = ItemVehicle::has('item')->with(['item', 'item.brand', 'item.country', 'item.categories'])->whereIn('vehicle_id', $vehicles)->paginate(12, ['*'], 'page', $page);
-        // print_r($allItems);
-        if($allItems){
-            return view('frontend.partials.vechile-items', compact('allItems'))->render();
-        }else{
-            return "";
-        }
         
 
     }
@@ -231,14 +367,24 @@ class FrontendController extends Controller
 
     public function productDetail($slug){
         $product_detail= Item::getProductBySlug($slug);
-        // print_r($product_detail);
+        // $product_detail= Item::with(['inventory','product','product.features','images','brand','country','categories','vehicles'])->where('slug',$slug)->first();
+        // print_r($product_detail->wps_id);
+        // $images = ItemImage::where('item_id',$product_detail->wps_id)->get();
+        // print_r($images);
+
         // die;
         // dd($product_detail);
-        return view('frontend.pages.product_detail')->with('product_detail',$product_detail);
+        
+        $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
+        ->groupBy('category_id')
+        ->get();
+        return view('frontend.pages.product_detail')
+        ->with('vehicle_model_categories',$vehicle_model_categories)
+        ->with('product_detail',$product_detail);
     }
 
     public function productGrids(){
-        $products=Item::query()->with('images');
+        $products=Item::query()->with('images')->with('brand');
         
         // print_r($products);
         // die;
@@ -274,7 +420,7 @@ class FrontendController extends Controller
             $products->whereBetween('list_price',$price);
         }
 
-        $recent_products=Item::with('images')->where('status','!=','NLA')->orderBy('id','DESC')->limit(3)->get();
+        $recent_products=Item::with('images')->with('brand')->where('status','!=','NLA')->orderBy('id','DESC')->limit(3)->get();
         // Sort by number
         if(!empty($_GET['show'])){
             $products=$products->where('status','!=','NLA')->paginate($_GET['show']);
@@ -286,7 +432,14 @@ class FrontendController extends Controller
 //  print_r($products);
 //         die;
         $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
-        return view('frontend.pages.product-grids')->with('brands',$brands)->with('products',$products)->with('recent_products',$recent_products);
+        $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
+        ->groupBy('category_id')
+        ->get();
+        return view('frontend.pages.product-grids')
+        ->with('brands',$brands)
+        ->with('vehicle_model_categories',$vehicle_model_categories)
+        ->with('products',$products)
+        ->with('recent_products',$recent_products);
     }
     public function productLists(){
         $products=Item::query()->with('images');
@@ -387,29 +540,127 @@ class FrontendController extends Controller
             //     return redirect()->route('product-lists',$catURL.$brandURL.$priceRangeURL.$showURL.$sortByURL);
             // }
     }
-    public function productSearch(Request $request){
-       
-        $recent_products=Item::where('status','New')->orderBy('id','DESC')->limit(3)->get();
-        $products=Item::with('images')
-                    ->orwhere('name','like','%'.$request->search.'%')
-                    ->orwhere('list_price','like','%'.$request->search.'%')
-                    ->orderBy('id','DESC')
-                    ->paginate('9');
-                    $pagination = $products->appends ( array (
-                        'search' => $request->search 
-                      ) );
-        $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
-        return view('frontend.pages.product-grids')->with('brands',$brands)->with('products',$products)->with('recent_products',$recent_products)->withQuery ( $request->search );
-    }
-
-    public function productBrand(Request $request){
-        $products=Item::with('images')->where('brand_id', $request->slug)
-        ->orderBy('id','DESC')
-        ->paginate('9');
+    public function topProductSearch(){
+        $products= Item::with(['images','brand','categories','inventory']) ->where(function ($query) {
+            $term = '%' . request('term') . '%';
+            // print_r($term);
+            // die;
+            $query->where('name', 'like', trim($term))
+                  ->orWhere('sku', 'like', trim($term));
+        })->orderBy('wps_id', 'desc')->paginate(10);
+        $pagination = $products->appends ( array (
+            'term' => trim(request('term')),
+          ) );
+        $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
+        ->groupBy('category_id')
+        ->get();
 
         $recent_products=Product::where('status','active')->orderBy('id','DESC')->limit(3)->get();
         $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
-        return view('frontend.pages.product-grids')->with('brands',$brands)->with('products',$products)->with('recent_products',$recent_products);
+        return view('frontend.pages.product-grids')->with('brands',$brands)
+        ->with('vehicle_model_categories',$vehicle_model_categories)
+        ->with('products',$products)
+        ->with('term',trim(request('term')))
+        ->with('recent_products',$recent_products);
+
+    }
+    public function productSearch(Request $request){
+    //    print_r($request->all());
+    //    die;
+    $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
+    ->groupBy('category_id')
+    ->get();
+
+   
+    $products = Item::query();
+    $item_ids = ItemCategory::where('category_id', $request->product_category)->pluck('item_id');
+    if (isset($request->product_type)) {
+        $products->where('product_type', $request->product_type);
+    }
+    
+    if (isset($request->product_brand)) {
+        $products->where('brand_id', $request->product_brand);
+    }
+    
+    if (isset($request->product_category)) {
+       
+        $products->whereIn('wps_id', $item_ids);
+    }
+    
+    // Apply ordering
+    $products->orderBy('id', 'DESC');
+    
+    // Paginate the results
+    $paginatedProducts = $products->paginate(15);
+    // print_r($brand_ids);
+    // die;
+    $fproducts = Item::query();
+    $fproducts->whereIn('wps_id', $item_ids);
+    $brand_ids = $fproducts->pluck('brand_id');
+    $filtered_product_types = $fproducts->pluck('product_type','product_type');
+    $filter_brands=Brand::whereIn('wps_id', $brand_ids)->orderBy('title','ASC')->pluck('title','wps_id');
+
+    $fproductsTypes = Item::query();
+    if (isset($request->product_category)) {
+       
+        $fproductsTypes->whereIn('wps_id', $item_ids);
+    }
+    if (isset($request->product_brand)) {
+        $fproductsTypes->where('brand_id', $request->product_brand);
+    }
+    
+    
+    
+    $fproductsTypes->orderBy('product_type','ASC');
+    $fproductsTypesData = $fproductsTypes->pluck('product_type','product_type');
+
+    
+    // You can also append the query parameters to the pagination links if needed
+    $paginatedProducts->appends([
+        'product_type' => $request->product_type,
+        'product_brand' => $request->product_brand,
+        'product_category' => $request->product_category,
+    ]);
+    
+    // print_r($filter_brands);
+    // die;
+    // Array ( [_token] => KSdGeIV01wKJcvQQ2EAJKzNsvP27SCRZgqJlj6Zw [product_brand] => 1 [product_type] => Suspension [product_category] => 192 )
+        $recent_products=Item::where('status','New')->orderBy('id','DESC')->limit(3)->get();
+        // $products=Item::with('images')
+        //             ->with('brand')
+        //             ->where('name','like','%'.$request->search.'%')
+        //             // ->orwhere('list_price','like','%'.$request->search.'%')
+        //             ->orderBy('id','DESC')
+        //             ->paginate('9');
+        //             $pagination = $products->appends ( array (
+        //                 'search' => $request->search 
+        //               ) );
+        $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
+        return view('frontend.pages.product-grids')
+        ->with('brands',$brands)
+        ->with('products',$paginatedProducts)
+        ->with('product_type',$request->product_type)
+        ->with('product_brand',$request->product_brand)
+        ->with('product_category',$request->product_category) 
+        ->with('recent_products',$recent_products)
+        ->with('filter_brands',$filter_brands)
+        ->with('filtered_product_types',$filtered_product_types)
+        ->with('fproductsTypesData',$fproductsTypesData)
+        ->with('vehicle_model_categories',$vehicle_model_categories)
+        ->withQuery ( $request->product_type, $request->product_brand,$request->product_category);
+    }
+
+    public function productBrand(Request $request){
+        $products=Item::with('images')->with('brand')->where('brand_id', $request->slug)
+        ->orderBy('id','DESC')
+        ->paginate('9');
+        $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
+        ->groupBy('category_id')
+        ->get();
+
+        $recent_products=Product::where('status','active')->orderBy('id','DESC')->limit(3)->get();
+        $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
+        return view('frontend.pages.product-grids')->with('brands',$brands)->with('vehicle_model_categories',$vehicle_model_categories)->with('products',$products)->with('recent_products',$recent_products);
         // if(request()->is('e-shop.loc/product-grids')){
         //     return view('frontend.pages.product-grids')->with('products',$products->products)->with('recent_products',$recent_products);
         // }
@@ -422,7 +673,7 @@ class FrontendController extends Controller
         
         $items_ids =  ItemCategory::where('category_id',$request->wps_id)->pluck('item_id')->all();
         $items_ids = array_unique($items_ids);
-        $items = Item::with('images')->whereIn('wps_id', $items_ids)
+        $items = Item::with('images')->with('brand')->whereIn('wps_id', $items_ids)
                     ->orderBy('id','DESC')
                     ->paginate('9');
         
@@ -430,7 +681,7 @@ class FrontendController extends Controller
         // die;
         // return $request->slug;
         $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
-        $recent_products=Item::with('images')->where('status','NEW')->orderBy('id','DESC')->limit(3)->get();
+        $recent_products=Item::with('images')->with('brand')->where('status','NEW')->orderBy('id','DESC')->limit(3)->get();
         return view('frontend.pages.product-grids')->with('brands',$brands)->with('products',$items)->with('recent_products',$recent_products);
         // if(request()->is('e-shop.loc/product-grids')){
         //     return view('frontend.pages.product-grids')->with('products',$items)->with('recent_products',$recent_products);
@@ -442,8 +693,23 @@ class FrontendController extends Controller
     }
     
     public function newProductCat(Request $request){
-        $attributevalues = Attributevalue::has('items')->where('attributekey_id',1)->get();
-        $category = Category::where('wps_id',$request->wps_id)->first();
+        //$attributevalues = Attributevalue::has('items')->where('attributekey_id',1)->get();
+       $category = Category::where('wps_id',$request->wps_id)->first();
+        $item_ids = ItemCategory::where('category_id', $request->wps_id)->pluck('item_id');
+        $fproducts = Item::query();
+        $fproducts->whereIn('wps_id', $item_ids);
+        $attributevalues = $fproducts->pluck('product_type','product_type')->toArray();
+        $attributevalues =  array_unique($attributevalues);
+       
+        asort($attributevalues);
+
+        $attributevalues = array_values($attributevalues);
+        $attributevalues = array_filter($attributevalues, function($key, $value) {
+            return $value !== '';
+        }, ARRAY_FILTER_USE_BOTH);
+        array_shift($attributevalues);
+        // print_r($attributevalues);
+        // die;
        
         return view('frontend.pages.product-types')->with('category',$category)->with('attributevalues',$attributevalues);
     }
@@ -453,13 +719,20 @@ class FrontendController extends Controller
         $categoryId = $request->cat_id;
     
 
-        $items = Item::with('images')->whereHas('categories', function ($query) use ($categoryId) {
+        $items = Item::with('images')->with('brand')->whereHas('categories', function ($query) use ($categoryId) {
             $query->where('categories.wps_id', $categoryId);
-        })->where('product_type', $request->name)->paginate('12');
+        })->where('product_type', str_replace('-', '/', $request->name))->paginate('12');
         
         $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
-        $recent_products=Item::with('images')->where('status','NEW')->orderBy('id','DESC')->limit(3)->get();
-        return view('frontend.pages.product-grids')->with('brands',$brands)->with('products',$items)->with('recent_products',$recent_products);
+        $recent_products=Item::with('images')->with('brand')->where('status','NEW')->orderBy('id','DESC')->limit(3)->get();
+        $vehicle_model_categories = VehiclemodelCategory::with('category')->select('category_id', DB::raw('COUNT(*) as category_count'))
+        ->groupBy('category_id')
+        ->get();
+        return view('frontend.pages.product-grids')
+        ->with('brands',$brands)
+        ->with('vehicle_model_categories',$vehicle_model_categories)
+        ->with('products',$items)
+        ->with('recent_products',$recent_products);
     }
     public function productSubCat(Request $request){
        
@@ -467,11 +740,11 @@ class FrontendController extends Controller
         $items_ids = array_unique($items_ids);
         // print_r($items_ids);
         // die;
-        $items = Item::with('images')->whereIn('wps_id', $items_ids)
+        $items = Item::with('images')->with('brand')->whereIn('wps_id', $items_ids)
                     ->orderBy('id','DESC')
                     ->paginate('9');
                     $brands=Brand::has('items')->orderBy('title','ASC')->where('status','active')->get();
-        $recent_products=Item::with('images')->where('status','NEW')->orderBy('id','DESC')->limit(3)->get();
+        $recent_products=Item::with('images'->with('brand'))->where('status','NEW')->orderBy('id','DESC')->limit(3)->get();
         return view('frontend.pages.product-grids')->with('brands',$brands)->with('products',$items)->with('recent_products',$recent_products);
         // if(request()->is('e-shop.loc/product-grids')){
         //     return view('frontend.pages.product-grids')->with('products',$items)->with('recent_products',$recent_products);
@@ -580,6 +853,10 @@ class FrontendController extends Controller
 
     // Login
     public function login(){
+        if(!session()->has('url.intended'))
+        {
+            session(['url.intended' => url()->previous()]);
+        }
         return view('frontend.pages.login');
     }
     public function loginSubmit(Request $request){
@@ -587,7 +864,15 @@ class FrontendController extends Controller
         if(Auth::attempt(['email' => $data['email'], 'password' => $data['password'],'status'=>'active'])){
             Session::put('user',$data['email']);
             request()->session()->flash('success','Successfully login');
-            return redirect()->route('home');
+
+            Cart::where('guest_id', '=', $request->session()->get('guest_id'))
+            ->update([
+                'user_id' => auth()->user()->id,
+                // Add more columns as needed
+            ]);
+
+            return redirect(session()->get('url.intended'));
+           // return redirect()->route('home');
         }
         else{
             request()->session()->flash('error','Invalid email and password pleas try again!');

@@ -39,5 +39,6 @@ class Vehicle extends Model
     {
         return $this->belongsToMany('App\Models\Item', 'item_vehicles', 'vehicle_id', 'item_id'); // Specify a different alias for the pivot table
     }
+   
 
 }

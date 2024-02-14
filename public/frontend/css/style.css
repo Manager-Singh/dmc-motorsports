@@ -249,9 +249,9 @@ Version:1.0
 	padding: 0;
 }
 /* Main Menu */
-.navbar-expand-lg .navbar-collapse{
-	display:block !important;
-}
+/* .navbar-expand-lg .navbar-collapse{ */
+	/* display:block !important; */
+/* } */
 .header.v3 .navbar-expand-lg .navbar-collapse{
 	display:block !important;
 	background:#333;
@@ -472,7 +472,7 @@ Version:1.0
 }
 .header .shopping .shopping-item {
 	position: absolute;
-	top: 68px;
+	top: 25px;
 	right: 0;
 	width: 300px;
 	background: #fff;
@@ -501,42 +501,47 @@ Version:1.0
 	border-bottom:1px solid #e6e6e6;
 }
 .header .shopping .dropdown-cart-header span {
-	text-transform: uppercase;
-	color: #222;
-	font-size: 13px;
-	font-weight: 600;
+    text-transform: uppercase;
+    color: #222;
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: 15px;
 }
 .header .shopping .dropdown-cart-header a {
-	float: right;
-	text-transform: uppercase;
-	color: #222;
-	font-size: 13px;
-	font-weight: 600;
+    float: right;
+    text-transform: uppercase;
+    color: #222;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid #f7941d;
+    border-radius: 5px;
+    padding: 0px 10px;
 }
 .header .shopping .dropdown-cart-header a:hover{
 	color:#F7941D;
 }
 .header .shopping-list li {
-	overflow: hidden;
-	border-bottom: 1px solid #e6e6e6;
-	padding-bottom: 15px;
-	margin-bottom: 15px;
-	position:relative;
+    overflow: hidden;
+    border-bottom: 1px solid #e6e6e6;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    position: relative;
 }
 .header .shopping-list li .remove {
-	position: absolute;
-	left: 0;
-	bottom: 16px;
-	margin-top: -20px;
-	height: 20px;
-	width: 20px;
-	line-height: 18px;
-	text-align: center;
-	background: #fff;
-	color: #222;
-	border-radius: 0;
-	font-size: 11px;
-	border: 1px solid #ededed;
+    position: absolute;
+    left: 0;
+    bottom: 16px;
+    margin-top: -20px;
+    height: 20px;
+    width: 20px;
+    line-height: 18px;
+    text-align: center;
+    background: #fff;
+    color: #222;
+    border-radius: 0;
+    font-size: 11px;
+    border: 1px solid #ededed;
+    top: 45px;
 }
 .header .shopping-list li .remove:hover{
 	background:#222;
@@ -544,9 +549,10 @@ Version:1.0
 	border-color:transparent;
 }
 .header .shopping-list .cart-img {
-	float: right;
-	border: 1px solid #ededed;
-	overflow:hidden;
+    float: right;
+    border: 1px solid #ededed;
+    overflow: hidden;
+    margin-left: 6px;
 }
 .header .shopping-list .cart-img img {
 	width: 70px;
@@ -557,10 +563,10 @@ Version:1.0
 .header .shopping-list .cart-img:hover img{
 	transform:scale(1.09);
 }
-.header .shopping-list .quantity{
-	line-height: 22px;
+.header .shopping-list .quantity {
+    line-height: 22px;
     font-size: 13px;
-	padding-bottom: 30px;
+    padding: 0px 6px;
 }
 .header .shopping-list h4 {
 	font-size: 14px;
@@ -602,6 +608,18 @@ Version:1.0
 	text-transform: uppercase;
 	font-size: 14px;
 	font-weight: 500;
+}
+.card-details .nice-select.form-control {
+    width: 78px !important;
+    padding: 0px 8px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+}
+.card-details input#card-number {
+    padding: 5px 10px !important;
+}
+.card-details input#cvc {
+    padding: 3px 10px !important;
 }
 .header .shopping-item .bottom .btn:hover{
 	background:#F7941D;
@@ -673,6 +691,26 @@ Version:1.0
 	line-height: 50px;
 	font-size: 14px;
 	font-weight: 400;
+}
+.header.shop .top-search-form .nice-select {
+   
+    width: 100%;
+	border-radius: 5px;
+	border: 1px solid #ccc;
+	border-right: 1px solid #ccc;
+ 
+}
+form.top-search-form {
+    width: 900px;
+    margin: 0 auto;
+}
+.nice-select .list {
+	z-index: 99999 !important;
+}
+.search-tab.search-tab-new {
+    width: 100%;
+    /* position: relative; */
+    float: left;
 }
 .header.shop .nice-select::after {
 	border-color: #666;
@@ -1750,8 +1788,12 @@ Version:1.0
 	border-color:transparent;
 }
 /* Sinlge Product */
-.single-product{
-	margin-top:50px;
+.single-product {
+    /* margin-top: 0px; */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 1px;
+    margin-bottom: 35px;
 }
 .single-product .product-img {
   position: relative;
@@ -2305,7 +2347,7 @@ Version:1.0
    Start Shop Single CSS
 ========================================*/
 .shop.single{
-	padding:70px 0 100px;
+	padding:20px 0 100px;
 }
 .shop.single .product-gallery {
 	margin-top: 30px;
@@ -2846,8 +2888,12 @@ Version:1.0
 	overflow: hidden;
 	position: relative;
 	margin-top: 30px;
-	border: 1px solid #eee;
+	border: 1px solid #ccc;
 	padding: 10px;
+}
+
+.shop-section-title {
+    margin-top: 20px;
 }
 .shop-home-list .single-list .list-image{
 	position:relative;
@@ -2864,6 +2910,7 @@ Version:1.0
 	opacity:0.3;
 	visibility:visible;
 }
+
 .shop-home-list .single-list .list-image .buy{
 	height:40px;
 	width:40px;
@@ -2903,8 +2950,8 @@ Version:1.0
 	height:100%;
 }
 .shop-home-list .single-list .content {
-	padding-top: 45px;
-	padding-right: 12px;
+    text-align: center;
+    padding: 50px;
 }
 .shop-home-list .single-list .content .title {
 	line-height: 18px;
@@ -5060,4 +5107,66 @@ ul.nav.main-menu.menu.navbar-nav {
 /*partner-logo*/
 	ul.partner-logo {
     display: flex;
+}
+.shop-parts ul {
+    line-height: 30px;
+    margin-top: 10px;
+}
+.shop-parts h4 {
+    font-size: 20px;
+    font-weight: 800 !important;
+}
+
+/*category page and product page*/
+.single-product .product-img {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mobile {
+    display: none;
+}
+.navbar-nav {
+    margin: 0px auto;
+}
+	.content-box h5 {
+    margin-top: 20px;
+}
+.content-box p {
+    line-height: 30px;
+}
+.content-box ul, .content-box ul li {
+    list-style-type: disc !important;
+}
+.content-box ul {
+    padding-left: 18px;
+}
+.content-box ul {
+    padding-left: 35px;
+    margin-top: 10px;
+}
+section.product-area.shop-sidebar.shop.section {
+    padding: 20px 0px;
+}
+.nice-select.form-control.open ul.list {
+    height: 500px;
+    overflow: scroll;
+    position: relative;
+    top: -6px;
+    width: 250px;
+    left: -20px;
+}
+.bg-secondary.align-items-center.justify-content-between
+{
+    background-position: right !important;
+}
+.content-box p {
+    margin-bottom: 10px;
+}
+.header.shop .nice-select .list {
+    height: 600px;
+}
+.product-content {
+    padding: 0px 10px 10px;
 }

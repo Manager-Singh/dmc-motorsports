@@ -39,10 +39,19 @@ class Item extends Model
         'prop_65_detail',
         'drop_ship_fee',
         'drop_ship_eligible',
+        'type',
+        'description'
     ];
 
     protected $primaryKey = 'wps_id';
-
+    
+    public static function countItems(){
+        $data=Item::count();
+        if($data){
+            return $data;
+        }
+        return 0;
+    }
      public static function getAllProduct(){
         return Item::with(['cat_info','sub_cat_info'])->orderBy('id','desc')->paginate(10);
     }

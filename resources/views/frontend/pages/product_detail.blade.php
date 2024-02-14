@@ -17,6 +17,10 @@
 @section('title','E-SHOP || PRODUCT DETAIL')
 @section('main-content')
 
+ <div class="container-fluid bg-white pt-3 px-lg-5" style="background: #ededed !important;">
+        
+    @include('frontend.partials.search')
+    </div>
 		<!-- Breadcrumbs -->
 		<div class="breadcrumbs">
 			<div class="container">
@@ -25,7 +29,7 @@
 						<div class="bread-inner">
 							<ul class="bread-list">
 								<li><a href="{{route('home')}}">Home<i class="ti-arrow-right"></i></a></li>
-								<li class="active"><a href="">Shop Details</a></li>
+								<li class="active">{{$product_detail->brand->title}} {{$product_detail->name}}</li>
 							</ul>
 						</div>
 					</div>
@@ -48,16 +52,49 @@
 												<ul class="slides">
 													@php 
 														//$photo=explode(',',$product_detail->photo);
-													// dd($photo);
+													//dd($product_detail->images[0]);
+													//print_r($product_detail->images);
+													//die;
 													@endphp
-													@foreach($product_detail->images as $data)
+
+                                                    @if(count($product_detail->images)>0)
+													
+                                                   
+												   @if($product_detail->type=='custom')
+												    @foreach($product_detail->images as $data)
 													@php
-													$fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$data->filename;
+													if($data->domain == 'dmc-motorsports.com'){
+														$fimg_urlm = 'https://'.$data->domain.$data->path.'/'.$data->filename;
+													}else{
+														$fimg_urlm = 'http://cdn.wpsstatic.com/images/full/'.$data->filename;
+													}
+													@endphp
+												   <li data-thumb="{{$fimg_urlm}}" rel="adjustX:10, adjustY:">
+															<img src="{{$fimg_urlm}}" alt="{{$fimg_urlm}}">
+														</li>
+													 @endforeach 
+												   @else
+													@php
+													$image = $product_detail->images[0];
+													if($image->domain == 'dmc-motorsports.com'){
+														$fimg_url = 'https://'.$image->domain.$image->path.'/'.$image->filename;
+													}else{
+														$fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$image->filename;
+													}
 													@endphp
 														<li data-thumb="{{$fimg_url}}" rel="adjustX:10, adjustY:">
 															<img src="{{$fimg_url}}" alt="{{$fimg_url}}">
 														</li>
-													@endforeach
+													{{-- @endforeach --}}
+													@endif
+                                                    @else
+													<li data-thumb="{{asset('backend/img/thumbnail-default.jpg')}}" rel="adjustX:10, adjustY:">
+															<img src="{{asset('backend/img/thumbnail-default.jpg')}}" alt="{{asset('backend/img/thumbnail-default.jpg')}}">
+														</li>
+                                                    
+                                                        
+                                                    @endif
+												
 												</ul>
 											</div>
 											<!-- End Images slider -->
@@ -68,7 +105,9 @@
 										<div class="product-des">
 											<!-- Description -->
 											<div class="short">
-												<h4>{{$product_detail->name}}</h4>
+												<h4>{{$product_detail->brand->title}} {{$product_detail->name}}</h4>
+												<p><b>SKU:</b> {{$product_detail->sku}}</p>
+												<p><b>Product Type:</b> {{$product_detail->product_type}}</p>
 												<div class="rating-main">
 													<ul class="rating">
 														@php
@@ -87,7 +126,7 @@
                                                 @php 
                                                     $after_discount=($product_detail->price-(($product_detail->price*$product_detail->discount)/100));
                                                 @endphp
-												<p class="price"><span class="discount">${{number_format($product_detail->list_price,2)}}</span><s>${{number_format($product_detail->list_price,2)}}</s> </p>
+												<p class="price"><span class="discount">${{number_format($product_detail->list_price,2)}}</span>{{--<s>${{number_format($product_detail->list_price,2)}}</s>--}} </p>
 												<p class="description">{!!($product_detail->summary)!!}</p>
 											</div>
 											<!--/ End Description -->
@@ -154,8 +193,9 @@
 												@php
 
 												//print_r($product_detail->inventory);
+												$inventory  = getInventory($product_detail->wps_id)
 												@endphp
-												<p class="availability">Stock : @if($product_detail->inventory->total>0)<span class="badge badge-success">{{$product_detail->inventory->total}}</span>@else <span class="badge badge-danger">{{$product_detail->inventory->total}}</span>  @endif</p>
+												<p class="availability">Stock : @if($inventory>0)<span class="badge badge-success">{{$inventory}}</span>@else <span class="badge badge-danger">{{$inventory}}</span>  @endif</p>
 											</div>
 											<!--/ End Product Buy -->
 										</div>
@@ -168,8 +208,16 @@
 												<!-- Tab Nav -->
 												<ul class="nav nav-tabs" id="myTab" role="tablist">
 													<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#description" role="tab">Description</a></li>
+													@if($product_detail->type=='wps')
+													@if(isset($product_detail->product))
+													@if($product_detail->product->care_instructions)
 													<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#care-instructions" role="tab">Care Instructions</a></li>
+													@endif
+													@if($product_detail->product->features)
 													<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#features" role="tab">Features</a></li>
+													@endif
+													@endif
+													@endif
 													<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#reviews" role="tab">Reviews</a></li>
 												</ul>
 												<!--/ End Tab Nav -->
@@ -181,7 +229,11 @@
 														<div class="row">
 															<div class="col-12">
 																<div class="single-des">
+																	@if($product_detail->type=='wps')
 																	<p>{!! ($product_detail->product->description) !!}</p>
+																	@else
+																	<p>{!! ($product_detail->description) !!}</p>
+																	@endif
 
 																</div>
 															</div>
@@ -189,6 +241,7 @@
 													</div>
 												</div>
 												<!--/ End Description Tab -->
+												@if($product_detail->type=='wps')
 												<!-- care-instructions Tab -->
 												<div class="tab-pane fade show active" id="care-instructions" role="tabpanel">
 													<div class="tab-single">
@@ -218,6 +271,7 @@
 														</div>
 													</div>
 												</div>
+												@endif
 												<!--/ End Features Tab -->
 												<!-- Reviews Tab -->
 												<div class="tab-pane fade" id="reviews" role="tabpanel">

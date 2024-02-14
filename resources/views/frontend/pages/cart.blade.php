@@ -41,14 +41,25 @@
 								@if(Helper::getAllProductFromCart())
 									@foreach(Helper::getAllProductFromCart() as $key=>$cart)
 										<tr>
+											
+										
+									
+											@if(isset($cart->product->images))
+											@if($cart->product->images[0]->domain == 'dmc-motorsports.com')
 											@php
-										//	$photo=explode(',',$cart->product['photo']);
+											$fimg_url = 'https://'.$cart->product->images[0]->domain.$cart->product->images[0]->path.'/'.$cart->product->images[0]->filename;
+											@endphp
+											@else
+											@php
 											$fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$cart->product->images[0]->filename;
 											@endphp
+											@endif
+											@endif
 											<td class="image" data-title="No"><img src="{{$fimg_url}}" alt="{{$fimg_url}}"></td>
 											<td class="product-des" data-title="Description">
-												<p class="product-name"><a href="{{route('product-detail',$cart->product['slug'])}}" target="_blank">{{$cart->product['name']}}</a></p>
-												<p class="product-des">{!!($cart['summary']) !!}</p>
+												<p class="product-name"><a href="{{route('product-detail',$cart->product->slug)}}" target="_blank">{{$cart->product->name}}</a></p>
+												<p class="product-brand"><span>Brand:</span> {{$cart->product->brand->title}}</p>
+												<p class="product-sku"><span>SKU:</span> {{$cart->product->sku}}</p>
 											</td>
 											<td class="price" data-title="Price"><span>${{number_format($cart['price'],2)}}</span></td>
 											<td class="qty" data-title="Qty"><!-- Input Order -->
@@ -105,13 +116,13 @@
 						<div class="row">
 							<div class="col-lg-8 col-md-5 col-12">
 								<div class="left">
-									<div class="coupon">
+									<!-- <div class="coupon">
 									<form action="{{route('coupon-store')}}" method="POST">
 											@csrf
 											<input name="code" placeholder="Enter Your Coupon">
 											<button class="btn">Apply</button>
 										</form>
-									</div>
+									</div> -->
 									{{-- <div class="checkbox">`
 										@php
 											$shipping=DB::table('shippings')->where('status','active')->limit(1)->get();

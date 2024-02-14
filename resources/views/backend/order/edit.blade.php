@@ -18,6 +18,20 @@
           <option value="cancel" {{($order->status=='delivered') ? 'disabled' : ''}}  {{(($order->status=='cancel')? 'selected' : '')}}>Cancel</option>
         </select>
       </div>
+      <div class="form-group">
+        <label for="status">Tracking Number :</label>
+        <input class="form-control" type="text" name="tracking_number" value="" placeholder="Tracking Number"/>
+        @error('tracking_number')
+          <span class="text-danger">{{$message}}</span>
+          @enderror
+      </div>
+      <div class="form-group">
+        <label for="status">Tracking Url :</label>
+        <input class="form-control" type="text" name="tracking_url" value="" placeholder="Tracking Url"/>
+        @error('tracking_url')
+          <span class="text-danger">{{$message}}</span>
+          @enderror
+      </div>
       <button type="submit" class="btn btn-primary">Update</button>
     </form>
   </div>

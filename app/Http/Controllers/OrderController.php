@@ -16,6 +16,13 @@ use Helper;
 use Illuminate\Support\Str;
 use App\Notifications\StatusNotification;
 use Illuminate\Support\Facades\Hash;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use Stripe\Error\Card;
+use Stripe\Exception\CardException;
+use Stripe\StripeClient;
+use Validator;
+use Stripe\Token;
 
 class OrderController extends Controller
 {
@@ -59,7 +66,7 @@ class OrderController extends Controller
                 'phone'=>'numeric|required',
                 'post_code'=>'string|nullable',
                 'email'=>'string|required',
-                'password'=>'string|required|min:8'
+                'password'=>'string|required|min:8',
             ]);
         }else{
             $this->validate($request,[
@@ -70,9 +77,22 @@ class OrderController extends Controller
                 'coupon'=>'nullable|numeric',
                 'phone'=>'numeric|required',
                 'post_code'=>'string|nullable',
-                'email'=>'string|required'
+                'email'=>'string|required',
+                
             ]);
         }
+
+        // if($request->payment_method=='online'){
+        //     $this->validate($request,[
+        //         'cardNumber'=>'required',
+        //         'expmonth'=>'required',
+        //         'expyear'=>'required',
+        //         'cvv'=>'required',
+                
+        //     ]);
+        // }
+
+      
         // dd($request->all());
         if (auth()->check()) {
             if(empty(Cart::where('user_id',auth()->user()->id)->where('order_id',null)->first())){
@@ -112,6 +132,12 @@ class OrderController extends Controller
             // ]);
         }
 
+        // cardNumber
+        // expmonth
+        // expyear
+        // cvv
+          
+
         $order=new Order();
         $order_data=$request->all();
         $order_data['order_number']='ORD-'.strtoupper(Str::random(10));
@@ -123,38 +149,43 @@ class OrderController extends Controller
             }else{
                 $order_data['guest_id']=$request->session()->get('guest_id');
             }
-        $order_data['shipping_id']=$request->shipping;
-        $shipping=Shipping::where('id',$order_data['shipping_id'])->pluck('price');
+            if(Helper::totalCartPrice()<=150 || Helper::checkIfCartHasItemswithTires()>0){
+                 $order_data['shipping_id']=1;
+            }
         // return session('coupon')['value'];
         $order_data['sub_total']=Helper::totalCartPrice();
         $order_data['quantity']=Helper::cartCount();
         if(session('coupon')){
             $order_data['coupon']=session('coupon')['value'];
         }
-        if($request->shipping){
-            if(session('coupon')){
-                $order_data['total_amount']=Helper::totalCartPrice()+$shipping[0]-session('coupon')['value'];
-            }
-            else{
+        // if($request->shipping){
+            if(Helper::totalCartPrice()<=150 || Helper::checkIfCartHasItemswithTires()>0){
+                $shipping=Shipping::where('id',$order_data['shipping_id'])->pluck('price');
                 $order_data['total_amount']=Helper::totalCartPrice()+$shipping[0];
-            }
-        }
-        else{
-            if(session('coupon')){
-                $order_data['total_amount']=Helper::totalCartPrice()-session('coupon')['value'];
+                $order_data['shiping_amount']= $shipping;
+                
             }
             else{
-                $order_data['total_amount']=Helper::totalCartPrice();
+                $order_data['total_amount']=Helper::totalCartPrice()+0;
             }
-        }
+        // }
+        //else{
+            // if(session('coupon')){
+            //     $order_data['total_amount']=Helper::totalCartPrice()-session('coupon')['value'];
+            // }
+            // else{
+            //     $order_data['total_amount']=Helper::totalCartPrice();
+            // }
+       // }
         // return $order_data['total_amount'];
         $order_data['status']="new";
         if($request->payment_method=='paypal'){
             $order_data['payment_method']='paypal';
             $order_data['payment_status']='unpaid';
-        }else if($request->payment_method=='stripe'){
+        }
+        else if($request->payment_method=='stripe'){
             $order_data['payment_method']='stripe';
-            $order_data['payment_status']='unpaid';
+            $order_data['payment_status']='unpaid';  
         }
         else{
             $order_data['payment_method']='cod';
@@ -179,9 +210,73 @@ class OrderController extends Controller
         Notification::send($users, new StatusNotification($details));
         if($request->payment_method=='paypal'){
             return redirect()->route('payment',$order->id);
-        }else if($request->payment_method=='stripe'){
+        }
+        else if($request->payment_method=='stripe'){
            
-            return redirect()->route('payment.stripe.get',$order->id);
+            if ($request->payment_method=='stripe') { 
+            
+                \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+
+           
+                 
+            
+                if (!isset($request->stoken)) {
+                return redirect()->back();
+                }
+                // if($request->shipping){
+                    // $shipping=Shipping::where('id',$request->shipping)->pluck('price');
+                    $shipping=Shipping::where('id',1)->pluck('price');
+                    if(Helper::totalCartPrice()<=150 ||  Helper::checkIfCartHasItemswithTires()>0){
+                        $ptotal=Helper::totalCartPrice()+$shipping[0];
+                    }
+                    else{
+                        $ptotal=Helper::totalCartPrice()+0;
+                    }
+                // }
+                // else{
+                //     if(session('coupon')){
+                //         $ptotal=Helper::totalCartPrice()-session('coupon')['value'];
+                //     }
+                //     else{
+                //         $ptotal=Helper::totalCartPrice();
+                //     }
+                // }
+
+                // print_r($ptotal);
+                // die;
+                try{
+                    $charge = \Stripe\Charge::create([
+                      'amount' => $ptotal*100,
+                      'currency' => 'usd',
+                      'source' => $request->stoken,
+                      'description' => $order->order_number.' Order Created by '.$order->email,
+                    ]);
+                    if( $charge->id){
+                        Order::where('id', $order->id)
+                        ->update(['payment_status' => 'paid','transaction_id' => $charge->balance_transaction]);
+                        // session()->forget('cart');
+                        // session()->forget('coupon');
+                    }
+
+
+                } catch(\Stripe\Exception\CardException $e) {
+                    return back()->with('message', $e->getError()->message);
+                } catch (\Stripe\Exception\RateLimitException $e) {
+                  return back()->with('message', $e->getError()->message);
+                } catch (\Stripe\Exception\InvalidRequestException $e) {
+                  return back()->with('message', $e->getError()->message);
+                } catch (\Stripe\Exception\AuthenticationException $e) {
+                 return back()->with('message', $e->getError()->message);
+                } catch (\Stripe\Exception\ApiConnectionException $e) {
+                 return back()->with('message', $e->getError()->message);
+                } catch (\Stripe\Exception\ApiErrorException $e) {
+                  return back()->with('message', $e->getError()->message);
+                } catch (Exception $e) {
+                  return back()->with('message', $e->getError()->message);
+                }
+               
+              
+            }
         }
         else{
             session()->forget('cart');
@@ -202,7 +297,51 @@ class OrderController extends Controller
                 ]);
             }
        
-        // dd($users);        
+        // dd($users);
+        
+        $morder=Order::getAllOrder($order->id);
+
+        $mail = new PHPMailer(true);     // Passing `true` enables exceptions
+ 
+
+
+            // Email server settings
+            $mail->SMTPDebug = 0;
+            $mail->isSMTP();
+            $mail->Host = env('MAIL_HOST');             //  smtp host
+            $mail->SMTPAuth = true;
+            $mail->Username = env('MAIL_USERNAME');   //  sender username
+            $mail->Password = env('MAIL_PASSWORD');       // sender password
+            $mail->SMTPSecure = env('MAIL_ENCRYPTION');                  // encryption - ssl/tls
+            $mail->Port = env('MAIL_PORT');                          // port - 587/465
+
+            $mail->setFrom(env('MAIL_FROM_ADDRESS'), 'DMC Motorsports');
+            $mail->addAddress($morder->email);
+        //  $mail->addBCC($request->emailBcc);
+
+            // $mail->addReplyTo('sender@example.com', 'SenderReplyName');
+
+            // if(isset($_FILES['emailAttachments'])) {
+            //     for ($i=0; $i < count($_FILES['emailAttachments']['tmp_name']); $i++) {
+            //         $mail->addAttachment($_FILES['emailAttachments']['tmp_name'][$i], $_FILES['emailAttachments']['name'][$i]);
+            //     }
+            // }
+            $htmlContent = view('emails.pdf', compact('order'))->render();
+
+            $mail->isHTML(true);                // Set email content format to HTML
+
+            $mail->Subject = 'Order'. $morder->order_number;
+            $mail->Body    = $htmlContent;
+            $mail->send();
+            // } catch (Exception $e) {
+ //      return back()->with('error','Message could not be sent.');
+ // }
+
+     // $mail->AltBody = plain text version of email body;
+
+     
+
+ 
         request()->session()->flash('success','Your product successfully placed in order');
         return redirect()->route('home');
     }
@@ -245,6 +384,13 @@ class OrderController extends Controller
         $this->validate($request,[
             'status'=>'required|in:new,process,delivered,cancel'
         ]);
+        if($request->status=="process"){
+            $this->validate($request,[
+                'tracking_number'=>'required',
+                'tracking_url'=>'required'
+               
+            ]); 
+        }
         $data=$request->all();
         // return $request->status;
         // if($request->status=='delivered'){
@@ -298,28 +444,31 @@ class OrderController extends Controller
 
     public function productTrackOrder(Request $request){
         // return $request->all();
-        $order=Order::where('user_id',auth()->user()->id)->where('order_number',$request->order_number)->first();
+        //where('user_id',auth()->user()->id)->
+        $order=Order::where('order_number',trim($request->order_number))->first();
         if($order){
             if($order->status=="new"){
             request()->session()->flash('success','Your order has been placed. please wait.');
-            return redirect()->route('home');
+           // return redirect()->route('home');
 
             }
             elseif($order->status=="process"){
                 request()->session()->flash('success','Your order is under processing please wait.');
-                return redirect()->route('home');
+              //  return redirect()->route('home');
     
             }
             elseif($order->status=="delivered"){
                 request()->session()->flash('success','Your order is successfully delivered.');
-                return redirect()->route('home');
+                //return redirect()->route('home');
     
             }
             else{
                 request()->session()->flash('error','Your order canceled. please try again');
-                return redirect()->route('home');
+               // return redirect()->route('home');
     
             }
+            return view('frontend.pages.order-track')->with('order',$order);
+            
         }
         else{
             request()->session()->flash('error','Invalid order numer please try again');

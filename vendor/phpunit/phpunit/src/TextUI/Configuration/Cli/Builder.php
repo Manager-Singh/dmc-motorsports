@@ -10,10 +10,14 @@
 namespace PHPUnit\TextUI\CliArguments;
 
 use function array_map;
+use function basename;
 use function explode;
+use function getcwd;
+use function is_file;
 use function is_numeric;
 use function sprintf;
 use PHPUnit\Runner\TestSuiteSorter;
+use PHPUnit\Util\Filesystem;
 use SebastianBergmann\CliParser\Exception as CliParserException;
 use SebastianBergmann\CliParser\Parser as CliParser;
 
@@ -55,6 +59,9 @@ final class Builder
         'enforce-time-limit',
         'exclude-group=',
         'filter=',
+        'generate-baseline=',
+        'use-baseline=',
+        'ignore-baseline',
         'generate-configuration',
         'globals-backup',
         'group=',
@@ -87,18 +94,22 @@ final class Builder
         'reverse-list',
         'static-backup',
         'stderr',
-        'stop-on-defect',
-        'stop-on-error',
-        'stop-on-failure',
-        'stop-on-warning',
-        'stop-on-incomplete',
-        'stop-on-risky',
-        'stop-on-skipped',
+        'fail-on-deprecation',
         'fail-on-empty-test-suite',
         'fail-on-incomplete',
+        'fail-on-notice',
         'fail-on-risky',
         'fail-on-skipped',
         'fail-on-warning',
+        'stop-on-defect',
+        'stop-on-deprecation',
+        'stop-on-error',
+        'stop-on-failure',
+        'stop-on-incomplete',
+        'stop-on-notice',
+        'stop-on-risky',
+        'stop-on-skipped',
+        'stop-on-warning',
         'strict-coverage',
         'disable-coverage-ignore',
         'strict-global-state',
@@ -112,9 +123,9 @@ final class Builder
         'log-events-text=',
         'log-events-verbose-text=',
         'version',
+        'debug',
     ];
-
-    private const SHORT_OPTIONS = 'd:c:hv';
+    private const SHORT_OPTIONS = 'd:c:h';
 
     /**
      * @throws Exception
@@ -125,17 +136,16 @@ final class Builder
             $options = (new CliParser)->parse(
                 $parameters,
                 self::SHORT_OPTIONS,
-                self::LONG_OPTIONS
+                self::LONG_OPTIONS,
             );
         } catch (CliParserException $e) {
             throw new Exception(
                 $e->getMessage(),
                 $e->getCode(),
-                $e
+                $e,
             );
         }
 
-        $argument                          = null;
         $atLeastVersion                    = null;
         $backupGlobals                     = null;
         $backupStaticProperties            = null;
@@ -174,12 +184,26 @@ final class Builder
         $excludeGroups                     = null;
         $executionOrder                    = null;
         $executionOrderDefects             = null;
+        $failOnDeprecation                 = null;
         $failOnEmptyTestSuite              = null;
         $failOnIncomplete                  = null;
+        $failOnNotice                      = null;
         $failOnRisky                       = null;
         $failOnSkipped                     = null;
         $failOnWarning                     = null;
+        $stopOnDefect                      = null;
+        $stopOnDeprecation                 = null;
+        $stopOnError                       = null;
+        $stopOnFailure                     = null;
+        $stopOnIncomplete                  = null;
+        $stopOnNotice                      = null;
+        $stopOnRisky                       = null;
+        $stopOnSkipped                     = null;
+        $stopOnWarning                     = null;
         $filter                            = null;
+        $generateBaseline                  = null;
+        $useBaseline                       = null;
+        $ignoreBaseline                    = false;
         $generateConfiguration             = false;
         $migrateConfiguration              = false;
         $groups                            = null;
@@ -206,13 +230,6 @@ final class Builder
         $reverseList                       = null;
         $stderr                            = null;
         $strictCoverage                    = null;
-        $stopOnDefect                      = null;
-        $stopOnError                       = null;
-        $stopOnFailure                     = null;
-        $stopOnIncomplete                  = null;
-        $stopOnRisky                       = null;
-        $stopOnSkipped                     = null;
-        $stopOnWarning                     = null;
         $teamcityLogfile                   = null;
         $testdoxHtmlFile                   = null;
         $testdoxTextFile                   = null;
@@ -225,10 +242,7 @@ final class Builder
         $logEventsVerboseText              = null;
         $printerTeamCity                   = null;
         $printerTestDox                    = null;
-
-        if (isset($options[1][0])) {
-            $argument = $options[1][0];
-        }
+        $debug                             = false;
 
         foreach ($options[0] as $option) {
             switch ($option[0]) {
@@ -367,6 +381,29 @@ final class Builder
 
                     break;
 
+                case '--generate-baseline':
+                    $generateBaseline = $option[1];
+
+                    if (basename($generateBaseline) === $generateBaseline) {
+                        $generateBaseline = getcwd() . DIRECTORY_SEPARATOR . $generateBaseline;
+                    }
+
+                    break;
+
+                case '--use-baseline':
+                    $useBaseline = $option[1];
+
+                    if (!is_file($useBaseline) && basename($useBaseline) === $useBaseline) {
+                        $useBaseline = getcwd() . DIRECTORY_SEPARATOR . $useBaseline;
+                    }
+
+                    break;
+
+                case '--ignore-baseline':
+                    $ignoreBaseline = true;
+
+                    break;
+
                 case '--generate-configuration':
                     $generateConfiguration = true;
 
@@ -486,8 +523,8 @@ final class Builder
                                 throw new Exception(
                                     sprintf(
                                         'unrecognized --order-by option: %s',
-                                        $order
-                                    )
+                                        $order,
+                                    ),
                                 );
                         }
                     }
@@ -504,38 +541,8 @@ final class Builder
 
                     break;
 
-                case '--stop-on-defect':
-                    $stopOnDefect = true;
-
-                    break;
-
-                case '--stop-on-error':
-                    $stopOnError = true;
-
-                    break;
-
-                case '--stop-on-failure':
-                    $stopOnFailure = true;
-
-                    break;
-
-                case '--stop-on-warning':
-                    $stopOnWarning = true;
-
-                    break;
-
-                case '--stop-on-incomplete':
-                    $stopOnIncomplete = true;
-
-                    break;
-
-                case '--stop-on-risky':
-                    $stopOnRisky = true;
-
-                    break;
-
-                case '--stop-on-skipped':
-                    $stopOnSkipped = true;
+                case '--fail-on-deprecation':
+                    $failOnDeprecation = true;
 
                     break;
 
@@ -546,6 +553,11 @@ final class Builder
 
                 case '--fail-on-incomplete':
                     $failOnIncomplete = true;
+
+                    break;
+
+                case '--fail-on-notice':
+                    $failOnNotice = true;
 
                     break;
 
@@ -561,6 +573,51 @@ final class Builder
 
                 case '--fail-on-warning':
                     $failOnWarning = true;
+
+                    break;
+
+                case '--stop-on-defect':
+                    $stopOnDefect = true;
+
+                    break;
+
+                case '--stop-on-deprecation':
+                    $stopOnDeprecation = true;
+
+                    break;
+
+                case '--stop-on-error':
+                    $stopOnError = true;
+
+                    break;
+
+                case '--stop-on-failure':
+                    $stopOnFailure = true;
+
+                    break;
+
+                case '--stop-on-incomplete':
+                    $stopOnIncomplete = true;
+
+                    break;
+
+                case '--stop-on-notice':
+                    $stopOnNotice = true;
+
+                    break;
+
+                case '--stop-on-risky':
+                    $stopOnRisky = true;
+
+                    break;
+
+                case '--stop-on-skipped':
+                    $stopOnSkipped = true;
+
+                    break;
+
+                case '--stop-on-warning':
+                    $stopOnWarning = true;
 
                     break;
 
@@ -749,12 +806,35 @@ final class Builder
                     break;
 
                 case '--log-events-text':
-                    $logEventsText = $option[1];
+                    $logEventsText = Filesystem::resolveStreamOrFile($option[1]);
+
+                    if ($logEventsText === false) {
+                        throw new Exception(
+                            sprintf(
+                                'The path "%s" specified for the --log-events-text option could not be resolved',
+                                $option[1],
+                            ),
+                        );
+                    }
 
                     break;
 
                 case '--log-events-verbose-text':
-                    $logEventsVerboseText = $option[1];
+                    $logEventsVerboseText = Filesystem::resolveStreamOrFile($option[1]);
+
+                    if ($logEventsVerboseText === false) {
+                        throw new Exception(
+                            sprintf(
+                                'The path "%s" specified for the --log-events-verbose-text option could not be resolved',
+                                $option[1],
+                            ),
+                        );
+                    }
+
+                    break;
+
+                case '--debug':
+                    $debug = true;
 
                     break;
             }
@@ -769,7 +849,7 @@ final class Builder
         }
 
         return new Configuration(
-            $argument,
+            $options[1],
             $atLeastVersion,
             $backupGlobals,
             $backupStaticProperties,
@@ -801,12 +881,26 @@ final class Builder
             $excludeGroups,
             $executionOrder,
             $executionOrderDefects,
+            $failOnDeprecation,
             $failOnEmptyTestSuite,
             $failOnIncomplete,
+            $failOnNotice,
             $failOnRisky,
             $failOnSkipped,
             $failOnWarning,
+            $stopOnDefect,
+            $stopOnDeprecation,
+            $stopOnError,
+            $stopOnFailure,
+            $stopOnIncomplete,
+            $stopOnNotice,
+            $stopOnRisky,
+            $stopOnSkipped,
+            $stopOnWarning,
             $filter,
+            $generateBaseline,
+            $useBaseline,
+            $ignoreBaseline,
             $generateConfiguration,
             $migrateConfiguration,
             $groups,
@@ -833,13 +927,6 @@ final class Builder
             $reverseList,
             $stderr,
             $strictCoverage,
-            $stopOnDefect,
-            $stopOnError,
-            $stopOnFailure,
-            $stopOnIncomplete,
-            $stopOnRisky,
-            $stopOnSkipped,
-            $stopOnWarning,
             $teamcityLogfile,
             $testdoxHtmlFile,
             $testdoxTextFile,
@@ -858,7 +945,8 @@ final class Builder
             $logEventsText,
             $logEventsVerboseText,
             $printerTeamCity,
-            $printerTestDox
+            $printerTestDox,
+            $debug,
         );
     }
 }

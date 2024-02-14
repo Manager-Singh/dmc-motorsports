@@ -53,7 +53,20 @@
         <div class="sidebar-heading">
             Shop
         </div>
+  <!--Messages -->
+    <li class="nav-item">
+        <a class="nav-link" href="{{route('message.index')}}">
+            <i class="fas fa-envelope fa-envelope-o"></i>
+            <span>Messages   @if(count(Helper::messageList())>5)
+            <span data-count="5" class="badge badge-danger badge-counter">5+</span>
+        @else 
 
+    <span data-count="{{count(Helper::messageList())}}" class="badge badge-danger badge-counter">{{count(Helper::messageList())}}</span>
+
+        @endif</span>
+            
+        </a>
+    </li>
     <!-- Categories -->
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#categoryCollapse" aria-expanded="true" aria-controls="categoryCollapse">

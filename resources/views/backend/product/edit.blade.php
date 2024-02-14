@@ -11,7 +11,14 @@
         <div class="form-group">
           <label for="inputTitle" class="col-form-label">Title <span class="text-danger">*</span></label>
           <input id="inputTitle" type="text" name="name" placeholder="Enter name"  value="{{$product->name}}" class="form-control">
-          @error('title')
+          @error('name')
+          <span class="text-danger">{{$message}}</span>
+          @enderror
+        </div>
+        <div class="form-group">
+          <label for="inputTitle" class="col-form-label">Sku <span class="text-danger">*</span></label>
+          <input id="inputTitle" type="text" name="sku" placeholder="Enter sku"  value="{{$product->sku}}" class="form-control">
+          @error('sku')
           <span class="text-danger">{{$message}}</span>
           @enderror
         </div>
@@ -19,8 +26,12 @@
 
         <div class="form-group">
           <label for="description" class="col-form-label">Description</label>
+          @if($product->product)
           <input type="hidden" name="product_wps_id" value="{{$product->product->wps_id}}">
           <textarea class="form-control" id="description" name="description">{{$product->product->description}}</textarea>
+          @else
+          <textarea class="form-control" id="description" name="description">{{$product->description}}</textarea>
+          @endif
           @error('description')
           <span class="text-danger">{{$message}}</span>
           @enderror
@@ -28,7 +39,7 @@
 
         <div class="form-group">
           <label for="price" class="col-form-label">Price(USD) <span class="text-danger">*</span></label>
-          <input id="price" type="number" name="price" placeholder="Enter price"  value="{{$product->list_price}}" class="form-control">
+          <input id="price" type="text" name="price" placeholder="Enter price"  value="{{$product->list_price}}" class="form-control">
           @error('price')
           <span class="text-danger">{{$message}}</span>
           @enderror
@@ -40,7 +51,7 @@
           <select name="brand_id" class="form-control">
               <option value="">--Select Brand--</option>
              @foreach($brands as $brand)
-              <option value="{{$brand->id}}" {{(($product->brand_id==$brand->id)? 'selected':'')}}>{{$brand->title}}</option>
+              <option value="{{$brand->wps_id}}" {{(($product->brand_id==$brand->wps_id)? 'selected':'')}}>{{$brand->title}}</option>
              @endforeach
           </select>
         </div>
@@ -48,21 +59,73 @@
 
         <div class="form-group">
           <label for="stock">Inventory <span class="text-danger">*</span></label>
-          <input id="quantity" type="number" name="stock" min="0" placeholder="Enter inventory"  value="{{$product->inventory->total}}" class="form-control">
+          <input id="quantity" type="number" name="stock" min="0" placeholder="Enter inventory"  value="{{@$product->inventory->total}}" class="form-control">
           @error('stock')
           <span class="text-danger">{{$message}}</span>
           @enderror
         </div>
         <div class="form-group">
-          <label for="inputPhoto" class="col-form-label">Photo <span class="text-danger">*</span></label>
-          @foreach($product->images as $image)
+          @if(isset($product->images[0]))
+
+        
+          @if($product->images[0]->domain == 'dmc-motorsports.com')
           @php
-          $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$image->filename;
+          $fimg_url = 'https://'.$product->images[0]->domain.$product->images[0]->path.'/'.$product->images[0]->filename;
+          $sfimg_url = $product->images[0]->path.'/'.$product->images[0]->filename;
           @endphp
-          <img class="default-img" src="{{$fimg_url}}" alt="{{$fimg_url}}" with=400 height=200>
-          @endforeach
+          @else
+          @php
+          $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$product->images[0]->filename;
+          $sfimg_url='';
+          @endphp
+          @endif
+          @endif
+            <label for="inputPhoto" class="col-form-label">Photo <span class="text-danger">*</span></label>
+            <div class="input-group">
+                <span class="input-group-btn">
+                    <a id="lfm" data-input="thumbnail" data-preview="holder" class="btn btn-primary">
+                    <i class="fa fa-picture-o"></i> Choose
+                    </a>
+                </span>
+            <input id="thumbnail" class="form-control" type="text" name="photo" value="">
+          </div>
+          <div id="holder" style="margin-top:15px;max-height:100px;"></div>
+
+          @error('photo')
+          <span class="text-danger">{{$message}}</span>
+          @enderror
         </div>
-     
+        <div class="form-group">
+       
+          <img class="default-img" src="{{@$fimg_url}}" alt="{{@$fimg_url}}" with=400 height=200>
+        
+        </div>
+        <div class="form-group">
+            <label for="categories" class="col-form-label">Categories <span class="text-danger">*</span></label>
+            @php 
+                $selected_categories = $product->categories->pluck('wps_id')->toArray();
+            @endphp
+            <select name="categories[]" class="form-control categories" multiple>
+                @foreach($categories as $cvkey => $category)
+                    <option value="{{$cvkey}}" {{(in_array($cvkey, $selected_categories)? 'selected' : '')}}>{{$category}}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="attributevalues" class="col-form-label">Attributes <span class="text-danger">*</span></label>
+            @php 
+                $attributevalues_wps_ids = $product->attributevalues->pluck('wps_id')->toArray();
+                //print_r($attributevalues_wps_ids);
+                //print_r('<br>');
+                //print_r($attributevalues); 
+            @endphp
+            <select name="attributevalues[]" class="form-control attributevalues" multiple>
+                @foreach($attributevalues as $attributevalue)
+                    <option value="{{$attributevalue['wps_id']}}" {{(in_array($attributevalue['wps_id'], $attributevalues_wps_ids)? 'selected' : '')}}>{{getAttributeKeyName($attributevalue['attributekey_id'])}} {{$attributevalue['name']}}</option>
+                @endforeach
+            </select>
+        </div>
+        
         <div class="form-group">
           <label for="status" class="col-form-label">Status <span class="text-danger">*</span></label>
           <select name="status" class="form-control">
@@ -165,5 +228,23 @@
         if(child_cat_id!=null){
             $('#cat_id').change();
         }
+
+        $(document).ready(function() {
+          $(".categories").select2({
+            tags: false
+        });
+        $(".attributevalues").select2({
+            tags: false
+        });
+        
+      });
+       // Function to generate tag list with key-value pairs
+    // function generateTagList(categories) {
+    //     var tagList = [];
+    //     $.each(categories, function(key, value) {
+    //         tagList.push({ value: key, text: value });
+    //     });
+    //     return tagList;
+    // }
 </script>
 @endpush

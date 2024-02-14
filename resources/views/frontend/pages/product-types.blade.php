@@ -35,20 +35,20 @@
                     
                     @foreach($attributevalues as $attributevalue)
                     @php
-                    $count = Helper::getItemCount($category->wps_id,$attributevalue->name);
+                    //$count = Helper::getItemCount($category->wps_id,$attributevalue);
                     @endphp
-                    @if($count>0)
+                   
                         <div class="col-md-4">
                             <!-- Start Single List  -->
                             <div class="single-list">
                                     <div class="content">
-                                        <h4 class="title"><a href="{{route('product-types-by-cat',[$category->wps_id,$attributevalue->name])}}">{{$attributevalue->name}}</a></h4>
+                                        <h4 class="title"><a href="{{route('product-types-by-cat',[$category->wps_id,str_replace('/', '-', $attributevalue)])}}">{{$attributevalue}}</a></h4>
                                     </div>
                                 
                             </div>
                             <!-- End Single List  -->
                         </div>
-                        @endif
+                       
                     @endforeach
 
             </div>

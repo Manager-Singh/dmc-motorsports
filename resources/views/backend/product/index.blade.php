@@ -10,9 +10,30 @@
      </div>
     <div class="card-header py-3">
       <h6 class="m-0 font-weight-bold text-primary float-left">Items Lists</h6>
-      <!-- <a href="{{route('product.create')}}" class="btn btn-primary btn-sm float-right" data-toggle="tooltip" data-placement="bottom" title="Add User"><i class="fas fa-plus"></i> Add Product</a> -->
+      <a href="{{route('product.create')}}" class="btn btn-primary btn-sm float-right" data-toggle="tooltip" data-placement="bottom" title="Add User"><i class="fas fa-plus"></i> Add Product</a>
     </div>
     <div class="card-body">
+    <div class="mx-auto pull-right">
+            <div class="listing-search-form">
+                <form action="{{ route('product.index') }}" method="GET" role="search">
+
+                    <div class="input-group">
+                        <input type="text" class="form-control mr-2" name="term" placeholder="Search Items" value="{{@$_GET['term']}}" id="term">
+                        <a href="{{ route('product.index') }}" class=" mt-1">
+                            <span class="input-group-btn">
+                            <button class="btn btn-info" type="submit" title="Search Items">
+                                  <span class="fas fa-search"></span>
+                               </button>
+                                <button class="btn btn-danger" type="button" title="Refresh page">
+                                    <span class="fas fa-sync-alt"></span>
+                                </button>
+                               
+                            </span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
       <div class="table-responsive">
         @if(count($products)>0)
         <table class="table table-bordered" id="product-dataTable" width="100%" cellspacing="0">
@@ -55,7 +76,10 @@
             </tr>
           </tfoot>
           <tbody>
-
+          @php
+           //print_r($products);
+            //  die;
+             @endphp
             @foreach($products as $product)
               @php
              // print_r($product);
@@ -87,12 +111,11 @@
                       @endphp
                       @endforeach
                     </td>
-                    <!-- <td>{{(($product->product->description)? $product->product->description: '')}}</td> -->
                     <td>{{$product->list_price}} /-</td>
                     <!-- <td>{{$product->discount}}% OFF</td> -->
                     <!-- <td>{{$product->size}}</td> -->
                     <!-- <td>{{$product->condition}}</td> -->
-                    <td> {{ucfirst($product->brand->title)}}</td>
+                    <td> {{ucfirst(@$product->brand->title)}}</td>
                     <td>
                       @if(getInventory($product->wps_id)>0)
                       <span class="badge badge-primary">{{getInventory($product->wps_id)}}</span>
@@ -105,8 +128,13 @@
                             @if(count($product->images)>0)
                               @php
                             
-                              $f_item_image = $product->images[0];
-                              $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$f_item_image->filename;    
+                              $image = $product->images[0];
+                              if($image->domain == 'dmc-motorsports.com'){
+                                $fimg_url = 'https://'.$image->domain.$image->path.'/'.$image->filename;
+                              }else{
+                                $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$image->filename;
+                              }
+                              //$fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$f_item_image->filename;    
                               @endphp
                               @else
                               @php
@@ -124,7 +152,12 @@
                         @endif
                     </td>
                     <td>
-                        <a href="{{route('product.edit',$product->wps_id)}}" class="btn btn-primary btn-sm float-left mr-1" style="height:30px; width:30px;border-radius:50%" data-toggle="tooltip" title="edit" data-placement="bottom"><i class="fas fa-edit"></i></a>
+                    <a href="{{route('product.vehicle.edit',$product->wps_id)}}" class="btn btn-primary btn-sm float-left mr-1" style="height:30px; width:30px;border-radius:50%" data-toggle="tooltip" title="edit" data-placement="bottom"><i class="fas fa-car"></i></a>   
+                    <a href="{{route('product.edit',$product->wps_id)}}" class="btn btn-primary btn-sm float-left mr-1" style="height:30px; width:30px;border-radius:50%" data-toggle="tooltip" title="edit" data-placement="bottom"><i class="fas fa-edit"></i></a>
+                    @if($product->type=='wps')  
+                    <a href="{{route('update.item.wps.images',$product->wps_id)}}" class="float-left mr-1" style="height:30px; width:30px;border-radius:50%" data-toggle="tooltip" title="Synchronize Images" data-placement="bottom"><img src="{{asset('images/synchronize.png')}}" width="32"></a>
+                    <a href="{{route('update.item.wps.vehicles',$product->wps_id)}}" class="float-left mr-1" style="height:30px; width:30px;border-radius:50%" data-toggle="tooltip" title="Synchronize vehicles" data-placement="bottom"><img src="{{asset('images/car.png')}}" width="32"></a>
+                    @endif
                     <!-- <form method="POST" action="{{route('product.destroy',[$product->id])}}">
                       @csrf
                       @method('delete')

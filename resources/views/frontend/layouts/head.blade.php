@@ -2,6 +2,9 @@
 @yield('meta')
 <!-- Title Tag  -->
 <title>@yield('title')</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <!-- Favicon -->
 <link rel="icon" type="image/png" href="images/favicon.png">
 <!-- Web Font -->
@@ -58,6 +61,31 @@
     margin-left: 0px;
     }
 
-    /*
+   
+	
+	.header-top-search .search-top {
+    display: block;
+    width: 100%;
+}
+.header-top-search form.search-form {
+    opacity: 1;
+    visibility: visible;
+    transform: unset !important;
+    top: 0;
+    left: 0;
+    box-shadow: none;
+    position: relative;
+    width: 100%;
+}
+.header-top-search .search-form input {
+    width: 100%;
+    height: 26px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+.header-top-search .search-form button {
+    height: 25px;
+    border-left: 1px solid #ccc;
+}
 </style>
 @stack('styles')

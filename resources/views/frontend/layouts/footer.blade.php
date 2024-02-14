@@ -6,7 +6,7 @@
 								
 							@endphp
 	 <!-- Footer Start -->
-	 <div class="container-fluid bg-secondary py-5 px-sm-3 px-md-5 footer" style="margin-top: 90px;">
+	 <div class="container-fluid bg-secondary py-5 px-sm-3 px-md-5 footer">
         <div class="row pt-5">
             <div class="col-lg-3 col-md-6 mb-5">
                 <h4 class="text-uppercase text-light mb-4">Get In Touch</h4>
@@ -16,31 +16,31 @@
 				
                 <h6 class="text-uppercase text-white py-2">Follow Us</h6>
                 <div class="d-flex justify-content-start footer-social">
-                    <a class="btn btn-lg btn-dark btn-lg-square mr-2" href="#"><i class="fa fa-twitter"></i></a>
-                    <a class="btn btn-lg btn-dark btn-lg-square mr-2" href="#"><i class="fa fa-facebook-f"></i></a>
-                    <a class="btn btn-lg btn-dark btn-lg-square mr-2" href="#"><i class="fa fa-linkedin"></i></a>
-                    <a class="btn btn-lg btn-dark btn-lg-square" href="#"><i class="fa fa-instagram"></i></a>
+                    {{-- <a class="btn btn-lg btn-dark btn-lg-square mr-2" href="#"><i class="fa fa-twitter"></i></a> --}}
+                    <a class="btn btn-lg btn-dark btn-lg-square mr-2" href="https://www.facebook.com/DMCMotorsports14/"><i class="fa fa-facebook-f"></i></a>
+                    {{-- <a class="btn btn-lg btn-dark btn-lg-square mr-2" href="#"><i class="fa fa-linkedin"></i></a> --}}
+                    <a class="btn btn-lg btn-dark btn-lg-square" href="https://www.instagram.com/dmc_motorsports/"><i class="fa fa-instagram"></i></a>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-5">
                 <h4 class="text-uppercase text-light mb-4">Usefull Links</h4>
                 <div class="d-flex flex-column justify-content-start">
-                    <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Private Policy</a>
-                    <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Term & Conditions</a>
-                    <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>New Member Registration</a>
-                    <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Affiliate Programme</a>
-                    <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Return & Refund</a>
-                    <a class="text-body" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Help & FQAs</a>
+                    <!-- <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Private Policy</a> -->
+                    <a class="text-body mb-2" href="/term-and-conditions"><i class="fa fa-angle-right text-white mr-2"></i>Term & Conditions</a>
+                    <a class="text-body mb-2" href="/user/register"><i class="fa fa-angle-right text-white mr-2"></i>New Member Registration</a>
+                    <!-- <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Affiliate Programme</a> -->
+                    <a class="text-body mb-2" href="/return-and-refund"><i class="fa fa-angle-right text-white mr-2"></i>Return & Refund</a>
+                    <a class="text-body" href="/help"><i class="fa fa-angle-right text-white mr-2"></i>Help & FQAs</a>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-5">
                 <h4 class="text-uppercase text-light mb-4">Customer Service</h4>
                 <div class="d-flex flex-column justify-content-start">
-                    <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Payment Methods</a>
-                    <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Money-back</a>
-                    <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Returns</a>
-                    <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Shipping</a>
-                    <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Privacy Policy</a>
+                    <!-- <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Payment Methods</a> -->
+                    <!-- <a class="text-body mb-2" href="/moneyback"><i class="fa fa-angle-right text-white mr-2"></i>Money-back</a> -->
+                    <!-- <a class="text-body mb-2" href="#"><i class="fa fa-angle-right text-white mr-2"></i>Returns</a> -->
+                    <a class="text-body mb-2" href="/shipping-return-policy"><i class="fa fa-angle-right text-white mr-2"></i>Shipping & Returns Policy</a>
+                    <a class="text-body mb-2" href="/privacy-policy"><i class="fa fa-angle-right text-white mr-2"></i>Privacy Policy</a>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-5">
@@ -63,7 +63,11 @@
     </div>
     <!-- Footer End -->
 		
-	
+	<style>
+	#st-2.st-right {
+		display: none;
+	}
+	</style>
 	
  
 	<!-- Jquery -->
@@ -126,6 +130,27 @@
 				$('.dropdown-submenu .show').removeClass("show");
 				});
 
+			});
+			$('#product_category').change(function() {
+				$("#product_brand option:selected").prop("selected", false);
+				$("#product_type option:selected").prop("selected", false);
+				var parentForm = $(this).closest("form");
+				if (parentForm && parentForm.length > 0)
+				parentForm.submit();
+			});
+			$('#product_brand').change(function() {
+				// $("#product_brand option:selected").prop("selected", false);
+				$("#product_type option:selected").prop("selected", false);
+				var parentForm = $(this).closest("form");
+				if (parentForm && parentForm.length > 0)
+				parentForm.submit();
+			});
+			$('#product_type').change(function() {
+				// $("#product_brand option:selected").prop("selected", false);
+				// $("#product_type option:selected").prop("selected", false);
+				var parentForm = $(this).closest("form");
+				if (parentForm && parentForm.length > 0)
+				parentForm.submit();
 			});
 		});
 	  </script>

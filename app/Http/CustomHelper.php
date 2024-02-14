@@ -1,5 +1,10 @@
 <?php
-
+use App\Models\Attributekey;
+use App\Models\Attributevalue;
+use App\Models\Item;
+use App\Models\Inventory;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
 if (!function_exists('assets')) {
     function assets($path, $secure = null)
     {
@@ -12,12 +17,58 @@ if (!function_exists('assets')) {
     }
 }
 
+if (!function_exists('getAttributeKeyName')) {
+    function getAttributeKeyName($attributekey_id)
+    {
+
+        return Attributekey::where('wps_id',$attributekey_id)->first()->name;
+        
+    }
+}
+if (!function_exists('genrateWpsId')) {
+    function genrateWpsId()
+    {
+        // Retrieve the latest wps_id from the 'Item' model or use 0 if no records are present
+        $latestItem = Item::orderBy('wps_id', 'DESC')->first();
+        $wps_id = $latestItem ? $latestItem->wps_id : 0;
+    
+        // Define a salt value (e.g., using a named constant)
+        $salt =  99;
+        $timestamp = microtime(true) * 10000;
+        // Generate a random integer between 10000 and 99999
+        $pre = random_int(1111, 9999);
+    
+        // Generate another random integer between 100000 and 9999999
+        $post = random_int(1111, 9999);
+    
+        // Calculate the sum of the random integers and the retrieved wps_id
+        $sum = $pre +$post+$timestamp;
+       // $counter = mt_rand();
+    
+        // Concatenate the salt and sum to create the final UUID
+        $uuid = $salt .$sum;
+    
+        // Return the generated UUID
+        return $uuid;
+    }
+}
 if (!function_exists('getInventory')) {
     function getInventory($item_wps_id)
     {
-        $curl = curl_init();
+        
+        $item = Item::with('inventory')->where('wps_id',$item_wps_id)->first();
+       // print_r( $item->inventory);
+        // die;
+        if($item->type == 'custom'){
+            
+            if(isset($item->inventory)){
+                return $item->inventory->total;
+            }
+            return 0;
+        }else{
+    $curl = curl_init();
 
-try {
+    try {
     // Set cURL options
     curl_setopt_array($curl, [
         CURLOPT_URL => "https://api.wps-inc.com/inventory?filter[item_id]=".$item_wps_id,
@@ -64,5 +115,8 @@ try {
 }
     }
 }
+}
+
+
 
 

@@ -5,6 +5,10 @@ use Auth;
 use Illuminate\Http\Request;
 use App\Models\Message;
 use App\Events\MessageSent;
+use App\Mail\ContactusMail;
+use Illuminate\Support\Facades\Mail;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 class MessageController extends Controller
 {
     /**
@@ -43,25 +47,54 @@ class MessageController extends Controller
         $this->validate($request,[
             'name'=>'string|required|min:2',
             'email'=>'email|required',
-            'message'=>'required|min:20|max:200',
+            'message'=>'required|max:200',
             'subject'=>'string|required',
             'phone'=>'numeric|required'
         ]);
-        // return $request->all();
+
+
+        // return ;
 
         $message=Message::create($request->all());
-            // return $message;
-        $data=array();
-        $data['url']=route('message.show',$message->id);
-        $data['date']=$message->created_at->format('F d, Y h:i A');
-        $data['name']=$message->name;
-        $data['email']=$message->email;
-        $data['phone']=$message->phone;
-        $data['message']=$message->message;
-        $data['subject']=$message->subject;
-        $data['photo']=Auth()->user()->photo;
+            // print_r($message->name);
+            // die;
+        $datav=array();
+        $datav['url']=route('message.show',$message->id);
+        $datav['date']=$message->created_at->format('F d, Y h:i A');
+        $datav['name']=$message->name;
+        $datav['email']=$message->email;
+        $datav['phone']=$message->phone;
+        $datav['message']=$message->message;
+        $datav['subject']=$message->subject;
+        if(isset(Auth()->user()->photo)){
+            $datav['photo']=Auth()->user()->photo;
+
+        }
+
+
+        $data = [
+            'name' => $message->name,
+            'subject' => $message->subject,
+            'phone' => $message->phone,
+            'email' => $message->email,
+            'body' => $message->message,
+        ];
         // return $data;    
-        event(new MessageSent($data));
+        $subject = $message->subject;
+        $from_mail= $message->email;
+
+      $aaaa = Mail::send('emails.contactus', $data, function($messageb) use ($subject, $from_mail) {
+        $messageb->to(env('MAIL_ADMIN_ADDRESS'));
+        $messageb->subject($subject);
+        $messageb->from(env('MAIL_FROM_ADDRESS'),'DMC Motorsports');
+        });
+
+        Mail::send('emails.thanks', $data, function($messagen) use ($subject, $from_mail) {
+            $messagen->to($from_mail);
+            $messagen->subject('DMC Motorsports Support');
+            $messagen->from(env('MAIL_FROM_ADDRESS'),'DMC Motorsports');
+            });
+        event(new MessageSent($datav));
         exit();
     }
 

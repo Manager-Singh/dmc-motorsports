@@ -13,11 +13,14 @@
         "laravel/socialite": "^5.6",
         "laravel/tinker": "^2.8",
         "laravel/ui": "^4.2",
+        "phpjuice/paypal-checkout-sdk": "^3.2",
+        "phpmailer/phpmailer": "^6.9",
         "pusher/pusher-php-server": "^7.2",
         "spatie/laravel-newsletter": "^5.1",
         "srmklive/paypal": "^3.0",
         "stripe/stripe-php": "^13.7",
-        "unisharp/laravel-filemanager": "^2.6"
+        "unisharp/laravel-filemanager": "^2.6",
+        "cartalyst/stripe-laravel": "^15.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
@@ -33,7 +36,8 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeds/",
-            "Touhidurabir\\Filterable\\": "packages/laravel-filterable/src/"
+            "Touhidurabir\\Filterable\\": "packages/laravel-filterable/src/",
+            "Srmklive\\PayPal\\": "vendor/srmklive/paypal/src"
         }
     },
     "autoload-dev": {

@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 class Brand extends Model
 {
     protected $fillable=['wps_id','title','slug','status'];
-
+    protected $primaryKey = 'wps_id';
     // public static function getProductByBrand($id){
     //     return Product::where('brand_id',$id)->paginate(10);
     // }

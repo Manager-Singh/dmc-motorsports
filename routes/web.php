@@ -13,6 +13,7 @@
     use App\Http\Controllers\PostCommentController;
     use App\Http\Controllers\CouponController;
     use App\Http\Controllers\PaypalController;
+    use App\Http\Controllers\ProductController;
     use App\Http\Controllers\NotificationController;
     use App\Http\Controllers\HomeController;
     use \UniSharp\LaravelFilemanager\Lfm;
@@ -54,16 +55,19 @@
     Route::get('login/{provider}/', [LoginController::class, 'redirect'])->name('login.redirect');
     Route::get('login/{provider}/callback/', [LoginController::class, 'Callback'])->name('login.callback');
 
-    Route::get('/', [FrontendController::class, 'home'])->name('home');
-    Route::get('/new', [FrontendController::class, 'nhome'])->name('nhome');
+    // Route::get('/', [FrontendController::class, 'home'])->name('home');
+    Route::get('/', [FrontendController::class, 'nhome'])->name('home');
     Route::get('/load-more', [FrontendController::class, 'loadMore'])->name('loadMore');
     Route::get('/get-vehicle-makes-cat',[FrontendController::class, 'getVehicleMakesCategories'])->name('get.vehicle.makes.categories');
+    Route::get('/get-vehicles',[FrontendController::class, 'getVehicles'])->name('get.vehicles');
+    
     Route::get('/get-vehicle-models',[FrontendController::class, 'getVehicleModels'])->name('get.vehicle.models');
     Route::get('/get-vehicle-model-years',[FrontendController::class, 'getVehicleModelYears'])->name('get.vehicle.model.years');
-    Route::post('/search-items',[FrontendController::class, 'searchItems'])->name('search.items');
+    Route::any('/search-items',[FrontendController::class, 'searchItems'])->name('search.items');
     Route::get('/search-items',[FrontendController::class, 'searchItems'])->name('get.search.items');
     
-
+    
+    Route::any('/products/search', [FrontendController::class, 'topProductSearch'])->name('top.product.search');
 // Frontend Routes
     Route::get('/home', [FrontendController::class, 'index']);
     Route::get('/about-us', [FrontendController::class, 'aboutUs'])->name('about-us');
@@ -85,7 +89,7 @@
     Route::get('/cart', function () {
         return view('frontend.pages.cart');
     })->name('cart');
-    Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
+    Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout')->middleware(['auth','user']);
 // Wishlist
     Route::get('/wishlist', function () {
         return view('frontend.pages.wishlist');
@@ -101,7 +105,7 @@
     Route::match(['get', 'post'], '/filter', [FrontendController::class, 'productFilter'])->name('shop.filter');
 // Order Track
     Route::get('/product/track', [OrderController::class, 'orderTrack'])->name('order.track');
-    Route::post('product/track/order', [OrderController::class, 'productTrackOrder'])->name('product.track.order');
+    Route::any('product/track/order', [OrderController::class, 'productTrackOrder'])->name('product.track.order');
 // Blog
     Route::get('/blog', [FrontendController::class, 'blog'])->name('blog');
     Route::get('/blog-detail/{slug}', [FrontendController::class, 'blogDetail'])->name('blog.detail');
@@ -125,13 +129,13 @@
 // Payment
 
     Route::get('payment/{id}', [PaypalController::class, 'payment'])->name('payment');
-    Route::get('payment-stripe/{id}', [PaypalController::class, 'payment_get_stripe'])->name('payment.stripe.get');
-    Route::post('paymentstripe', [PaypalController::class, 'payment_stripe'])->name('payment.stripe');
+    // Route::get('payment-stripe/{id}', [PaypalController::class, 'payment_get_stripe'])->name('payment.stripe.get');
+    // Route::post('paymentstripe', [PaypalController::class, 'payment_stripe'])->name('payment.stripe');
     Route::get('cancel', [PaypalController::class, 'cancel'])->name('payment.cancel');
     Route::get('payment/success/', [PaypalController::class, 'success'])->name('payment.success');
 
-    Route::get('cancel/stripe/{order_id}', [PaypalController::class, 'cancel_stripe'])->name('payment.cancel.stripe');
-    Route::get('payment/success/stripe{order_id}', [PaypalController::class, 'success_stripe'])->name('payment.success.stripe');
+    // Route::get('cancel/stripe/{order_id}', [PaypalController::class, 'cancel_stripe'])->name('payment.cancel.stripe');
+    // Route::get('payment/success/stripe{order_id}', [PaypalController::class, 'success_stripe'])->name('payment.success.stripe');
     
 
 
@@ -155,6 +159,12 @@
         Route::resource('/category', 'CategoryController');
         // Product
         Route::resource('/product', 'ProductController');
+        Route::get('product/{id}/vehicle', [ProductController::class, 'productVehicle'])->name('product.vehicle.edit');
+        Route::post('attach/vehicle', [ProductController::class, 'attachproductVehicle'])->name('attach.vehicle');
+        Route::get('delete-attached-vehicle', [ProductController::class, 'deleteproductVehicle'])->name('product.vehicle.delete');
+
+        
+
         // Ajax for sub category
         Route::post('/category/{id}/child', 'CategoryController@getChildByParent');
         // POST category
@@ -181,6 +191,9 @@
         Route::post('add-api-endpoint', [AdminController::class, 'apiEndpointCreate'])->name('api.endpoint.create');
         Route::delete('delete-api-endpoint/{id}', [AdminController::class, 'apiEndpointDelete'])->name('api.endpoint.delete');
         Route::post('endpoint-call', [AdminController::class, 'endpointCall'])->name('api.endpoint.call');
+        Route::get('update-wps-images', [AdminController::class, 'processItemImages'])->name('update.wps.images');
+        Route::get('update-item-wps-images/{wps_id}', [ProductController::class, 'updateImages'])->name('update.item.wps.images');
+        Route::get('update-item-wps-vehicles/{wps_id}', [ProductController::class, 'updateVehicles'])->name('update.item.wps.vehicles');
 
 
         
@@ -226,3 +239,25 @@
     Route::group(['prefix' => 'laravel-filemanager', 'middleware' => ['web', 'auth']], function () {
         Lfm::routes();
     });
+
+       Route::get('/term-and-conditions', function () {
+            return view('frontend.pages.toc');
+        })->name('tac');
+
+       Route::get('/return-and-refund', function () {
+            return view('frontend.pages.return');
+        })->name('rnr');
+
+         Route::get('/help', function () {
+            return view('frontend.pages.help');
+        })->name('help');
+
+         Route::get('/shipping-return-policy', function () {
+            return view('frontend.pages.shippingpolicy');
+        })->name('shipping-policy');
+
+            Route::get('/privacy-policy', function () {
+            return view('frontend.pages.privacy');
+        })->name('privacy');
+
+    // New View Routes

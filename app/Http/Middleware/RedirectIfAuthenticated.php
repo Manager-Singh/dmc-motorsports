@@ -20,8 +20,11 @@ class RedirectIfAuthenticated
     {
         if (Auth::guard($guard)->check()) {
             return redirect(RouteServiceProvider::HOME);
+            // return $this->redirectToPrevious($request);
         }
 
         return $next($request);
     }
+
+    
 }

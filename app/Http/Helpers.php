@@ -1,6 +1,7 @@
 <?php
 use App\Models\Message;
 use App\Models\Category;
+use App\Models\Brand;
 use App\Models\Attributekey;
 use App\Models\Attributevalue;
 use App\Models\PostTag;
@@ -37,8 +38,9 @@ class Helper{
         // ->groupBy('category_id')
         // ->get();
 
-        $categories = Category::has('items')->where('status','active')->where('is_parent',1)->orderBy('title','ASC')->get();
+        $categories = Category::has('items')->where('vocabulary_id',15)->where('status','active')->where('is_parent',1)->orderBy('title','ASC')->get();
     
+       // $categories = DB::table('categories')->where('vocabulary_id',15)->orderBy('title','ASC')->pluck('title','wps_id');
 
 
 
@@ -131,6 +133,16 @@ class Helper{
         }
         return Category::has('products')->orderBy('id','DESC')->get();
     }
+    public static function getCategoryName($wps_id){
+        
+            return Category::where('wps_id',$wps_id)->first()->title;
+      
+    }
+    public static function getBrandName($wps_id){
+        
+        return Brand::where('wps_id',$wps_id)->first()->title;
+  
+}
 
     public static function postTagList($option='all'){
         if($option='all'){
@@ -161,16 +173,33 @@ class Helper{
         return $this->hasOne('App\Models\Product','id','product_id');
     }
 
+    public static function checkIfCartHasItemswithTires($user_id=''){
+        if(Auth::check()){
+            if($user_id=="") $user_id=auth()->user()->id;
+            $count = Cart::where('user_id', $user_id) // Filter by user_id
+            ->where('order_id', null) // Filter where order_id is null
+            ->whereHas('product', function ($query) {
+                // Apply a condition to the related product model
+                $query->where('product_type', 'Tires'); // Filter where product_type is 'Tires'
+            })
+            ->count(); // Get the count
+             
+            // print_r($data);
+            
+            return $count;
+        }
+    }
+
     public static function getAllProductFromCart($user_id=''){
         if(Auth::check()){
             if($user_id=="") $user_id=auth()->user()->id;
-             $data = Cart::with(['product','product.images'])->where('user_id',$user_id)->where('order_id',null)->get();
+             $data = Cart::with(['product','product.images','product.brand'])->where('user_id',$user_id)->where('order_id',null)->get();
             // print_r($data);
             
             return $data;
         }
         else{
-            $data = Cart::with(['product','product.images'])->where('guest_id',request()->session()->get('guest_id'))->where('order_id',null)->get();
+            $data = Cart::with(['product','product.images','product.brand'])->where('guest_id',request()->session()->get('guest_id'))->where('order_id',null)->get();
             // print_r($data);
             // die;
             return $data;

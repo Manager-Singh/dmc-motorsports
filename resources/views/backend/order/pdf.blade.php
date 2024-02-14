@@ -175,7 +175,7 @@
     </table>
   </section>
   <div class="thanks mt-3">
-    <h4>Thank you for your business !!</h4>
+    <h4>Thanks for Purchase with us !!</h4>
   </div>
   <div class="authority float-right mt-5">
     <img src="https://dmc-motorsports.com/public/storage/photos/1/Logo/dmc-logo.png" alt="" width='200'>

@@ -219,6 +219,66 @@ class AdminController extends Controller
         return redirect()->route('api.settings');
       }
 
+
+      public function processItemImages(Request $request)
+{
+    //$Items = Item::where('type', 'wps')->get();
+
+    // Set the chunk size
+    $chunkSize = 50;
+
+    // Chunk the items and process them  imgupdated
+    Item::where('type', 'wps')->where('imgupdated', 'no')->chunk($chunkSize, function ($items) {
+        foreach ($items as $item) {
+            $urll = "https://api.wps-inc.com/items/" . $item->wps_id . "/images?page[size]=100";
+            $curl = curl_init();
+
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $urll,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => "",
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => "GET",
+                CURLOPT_POSTFIELDS => "",
+                CURLOPT_HTTPHEADER => [
+                    "Authorization: Bearer zNsW6dBeTgHS4qk0AEnbO86ibp5jrmPUYUJDNagE"
+                ],
+            ]);
+
+            $response = curl_exec($curl);
+            $err = curl_error($curl);
+
+            curl_close($curl);
+
+            if ($err) {
+                echo "cURL Error #:" . $err;
+            } else {
+                $cresponse = json_decode($response);
+                if ($cresponse) {
+                    if (count($cresponse->data) > 0) {
+                        foreach ($cresponse->data as $image) {
+                            $imagefound = Image::where('wps_id', $image->id)->first();
+                            if (!$imagefound) {
+                                Image::createRecord((array)$image);
+                            }
+                            ItemImage::where('item_id', $item->wps_id)->delete();
+                            // if () {
+                                ItemImage::create([
+                                    'item_id' => $item->wps_id,
+                                    'image_id' => $image->id
+                                ]);
+                            // }
+                        }
+                    }
+                }
+            }
+            Item::where('wps_id', $item->wps_id)->update(['imgupdated' => 'yes']);
+        }
+    });
+}
+
       public function endpointCall(Request $request)
     {
         try {
@@ -280,6 +340,8 @@ class AdminController extends Controller
             if($modalUrl=='App\Models\Product'){
                 $process  = $this->processProduct($response->json('data'),$response->json('meta'),$endpoint_id);
             }else if($modalUrl=='App\Models\Item'){
+
+             
                 $process  = $this->processItems($response->json('data'),$response->json('meta'),$endpoint_id);
             }else if($modalUrl=='App\Models\Category'){
                 $process  = $this->processCategory($response->json('data'),$response->json('meta'),$endpoint_id);
@@ -455,6 +517,8 @@ class AdminController extends Controller
         ])->timeout($timeout)->get($actualUrl);
         // print_r($actualUrl);
         // dd('dfgsg');
+        // print_r($response);
+        // die;  
         return $response;
     }
 
@@ -568,20 +632,20 @@ class AdminController extends Controller
     private function processItems($response,$meta,$endpoint_id)
     {
 
-    
+     
             $endpoint = Endpoint::findOrFail($endpoint_id);  
-            // print_r($response);
-            // die;                 
+                        
                     foreach ($response as $item) {
                         // $item_slug=Str::slug($item['name']);
                         //         $count=Category::where('wps_id','!=',$item['id'])->where('slug',$item_slug)->count();
                         //         if($count>0){
                         //             $item_slug=$item_slug.'-'.date('ymdis').'-'.Helper::generateRandomString(4).'-'.$item['id'];
                         //         }
+                        $item_id  = $item['id'];
                         $product_item = Item::updateOrCreate(
-                            ['wps_id' => $item['id']],
+                            ['wps_id' => $item_id],
                             [
-                                'wps_id' => $item['id'],
+                                'wps_id' => $item_id,
                                 'brand_id' => $item['brand_id'],
                                 'country_id' => $item['country_id'],
                                 'product_id' => $item['product_id'],
@@ -615,100 +679,126 @@ class AdminController extends Controller
                             ]
                           
                         );
-                        $attributevalues = $item['attributevalues']['data']; // Done
-                        $item_images = $item['images']['data']; // Done
+                        
+                        if ($product_item->wasRecentlyCreated) {
+                            $attributevalues = $item['attributevalues']['data']; // Done
+                        // $item_images = $item['images']['data']; // Done
                         // $inventory = $item['inventory']['data'];
-                        $item_taxonomyterms = $item['taxonomyterms']['data']; // Done
-                        $item_vehicles = $item['vehicles']['data'];
-                        $item_tags = $item['tags']['data'];// Done
-                        if(count($item_tags)>0){
-                            foreach ($item_tags as $item_tag) {
-                                
-                                $product_tem_tag_save = ItemTag::updateOrCreate(
-                                    ['tag_id' => $item_tag['id'],
-                                    'item_id' => $product_item->wps_id
-                                    ],
-                                    [
+                            $item_taxonomyterms = $item['taxonomyterms']['data']; // Done
+                            $item_vehicles = $item['vehicles']['data'];
+                            $item_tags = $item['tags']['data'];// Done
+                            if(count($item_tags)>0){
+                                foreach ($item_tags as $item_tag) {
+                                    
+                                    // $product_tem_tag_save = ItemTag::updateOrCreate(
+                                    //     ['tag_id' => $item_tag['id'],
+                                    //     'item_id' => $item_id
+                                    //     ],
+                                    //     [
+                                    //         'tag_id' => $item_tag['id'],
+                                    //         'item_id' => $item_id,
+                                    //         // ... other fields
+                                    //     ]
+                                    // );
+                                    $product_tem_tag_save = ItemTag::create([
                                         'tag_id' => $item_tag['id'],
-                                        'item_id' => $product_item->wps_id,
+                                        'item_id' => $item_id,
                                         // ... other fields
-                                    ]
-                                );
+                                    ]);
+                                }
                             }
-                        }
-                       
-                        if(count($item_taxonomyterms)>0){
-                            foreach ($item_taxonomyterms as $item_taxonomyterm) {
-                              
-                                $product_item_item_taxonomyterm_save = ItemCategory::updateOrCreate(
-                                    [
-                                        'item_id' => $product_item->wps_id,
-                                        'category_id' =>$item_taxonomyterm['id'],
-                                    ],
-                                    [
-                                        'item_id' => $product_item->wps_id,
+                           
+                            if(count($item_taxonomyterms)>0){
+                                foreach ($item_taxonomyterms as $item_taxonomyterm) {
+                                    $product_item_item_taxonomyterm_save = ItemCategory::create([
+                                        'item_id' => $item_id,
                                         'category_id' => $item_taxonomyterm['id'],
                                         // ... other fields
-                                    ]
-                                );
+                                    ]);
+                                    // $product_item_item_taxonomyterm_save = ItemCategory::updateOrCreate(
+                                    //     [
+                                    //         'item_id' => $item_id,
+                                    //         'category_id' =>$item_taxonomyterm['id'],
+                                    //     ],
+                                    //     [
+                                    //         'item_id' => $item_id,
+                                    //         'category_id' => $item_taxonomyterm['id'],
+                                    //         // ... other fields
+                                    //     ]
+                                    // );
+                                }
                             }
-                        }
-                        
-
-                        if(count($item_vehicles)>0){
-                            foreach ($item_vehicles as $item_vehicle) {
-                               
-                                $item_vehicle_data_save = ItemVehicle::updateOrCreate(
-                                    [
-                                        'item_id' => $product_item->wps_id,
-                                        'vehicle_id' => $item_vehicle['id'],
-                                    ],
-                                    [
-                                        'item_id' => $product_item->wps_id,
+                            
+    
+                            if(count($item_vehicles)>0){
+                                foreach ($item_vehicles as $item_vehicle) {
+                                    $item_vehicle_data_save = ItemVehicle::create([
+                                        'item_id' => $item_id,
                                         'vehicle_id' => $item_vehicle['id'],
                                         // ... other fields
-                                    ]
-                                );
+                                    ]);
+                                    // $item_vehicle_data_save = ItemVehicle::updateOrCreate(
+                                    //     [
+                                    //         'item_id' => $item_id,
+                                    //         'vehicle_id' => $item_vehicle['id'],
+                                    //     ],
+                                    //     [
+                                    //         'item_id' => $item_id,
+                                    //         'vehicle_id' => $item_vehicle['id'],
+                                    //         // ... other fields
+                                    //     ]
+                                    // );
+                               
+                                }
+                            }
                            
-                            }
-                        }
-                       
-                        if(count($item_images)>0){
-                            foreach ($item_images as $tem_image) {
-                              
-                                $product_item_image_save = ItemImage::updateOrCreate(
-                                    [
-                                        'item_id' => $product_item->wps_id,
-                                        'image_id' => $tem_image['id'],
-                                    ],
-                                    [
-                                        'item_id' => $product_item->wps_id,
-                                        'image_id' => $tem_image['id'],
+                            // if(count($item_images)>0){
+                            //     foreach ($item_images as $tem_image) {
+                                  
+                            //         $product_item_image_save = ItemImage::updateOrCreate(
+                            //             [
+                            //                 'item_id' => $product_item->wps_id,
+                            //                 'image_id' => $tem_image['id'],
+                            //             ],
+                            //             [
+                            //                 'item_id' => $product_item->wps_id,
+                            //                 'image_id' => $tem_image['id'],
+                            //                 // ... other fields
+                            //             ]
+                            //         );
+                            //     }
+                            // }
+                           
+                            if(count($attributevalues)>0){
+                                foreach ($attributevalues as $attributevalue) {
+                                   
+                                    $product_item_attributevalue_save = ItemAttributevalue::create([
+                                                'item_id' => $item_id,
+                                            'attributevalue_id' => $attributevalue['id'],
                                         // ... other fields
-                                    ]
-                                );
+                                    ]);
+                                    // $product_item_attributevalue_save = ItemAttributevalue::updateOrCreate(
+                                    //     [
+                                    //         'item_id' => $item_id,
+                                    //         'attributevalue_id' => $attributevalue['id'],
+                                    //     ],
+                                    //     [
+                                    //         'item_id' => $item_id,
+                                    //         'attributevalue_id' => $attributevalue['id'],
+                                    //         // ... other fields
+                                    //     ]
+                                    // );
+                                }
                             }
+                            $endpoint->increment('created_product'); 
+                            // print_r($product_item);
+                            // die;
+                           
+                            // dd('I am here');
+                        }else{
+                            $endpoint->increment('updated_product'); 
                         }
                        
-                        if(count($attributevalues)>0){
-                            foreach ($attributevalues as $attributevalue) {
-                               
-                                $product_item_attributevalue_save = ItemAttributevalue::updateOrCreate(
-                                    [
-                                        'item_id' => $product_item->wps_id,
-                                        'attributevalue_id' => $attributevalue['id'],
-                                    ],
-                                    [
-                                        'item_id' => $product_item->wps_id,
-                                        'attributevalue_id' => $attributevalue['id'],
-                                        // ... other fields
-                                    ]
-                                );
-                            }
-                        }
-                        // dd('sdfssdf11');
-                       
-                        // dd('I am here');
                     }
                
         if(isset($meta['cursor']['next'])){

@@ -1,23 +1,23 @@
 <header class="header shop">
 <div class="container-fluid py-3 top-bar px-lg-5 d-none d-lg-block">
         <div class="row">
-            <div class="col-md-6 text-center d-inline-flex text-lg-left mb-2 mb-lg-0">
+            <div class="col-md-5 text-center d-inline-flex text-lg-left mb-2 mb-lg-0">
 				 <div class="d-inline-flex align-items-center">
-                    <a class="text-body pr-2" href="">
+                    <a class="text-body pr-2" href="https://www.facebook.com/DMCMotorsports14/">
                         <i class="fa fa-facebook-f"></i>
                     </a>
-                    <a class="text-body px-2" href="">
+                    <!-- <a class="text-body px-2" href="">
                         <i class="fa fa-twitter"></i>
                     </a>
                     <a class="text-body px-2" href="">
                         <i class="fa fa-linkedin"></i>
-                    </a>
-                    <a class="text-body px-2" href="">
+                    </a> -->
+                    <a class="text-body px-2" href="https://www.instagram.com/dmc_motorsports/">
                         <i class="fa fa-instagram"></i>
                     </a>
-                    <a class="text-body px-2" href="">
+                    <!-- <a class="text-body px-2" href="">
                         <i class="fa fa-youtube"></i>
-                    </a>
+                    </a> -->
                 </div>
                  <!-- Top Left -->
                  <div class="top-left pl-3">
@@ -33,8 +33,19 @@
 					
                     <!--/ End Top Left -->
             </div>
-            <div class="col-md-6 text-center text-lg-right">
-           
+			<div class="col-md-3 header-top-search text-center d-inline-flex text-lg-left mb-2 mb-lg-0">
+			 <!-- Search Form -->
+                        <div class="search-top">
+                            <form class="search-form" method="GET" action="{{route('top.product.search')}}">
+                                
+                                <input type="text" placeholder="Search here..." name="term" value={{@$term}}>
+                                <button value="search" type="submit"><i class="ti-search"></i></button>
+                            </form>
+                        </div>
+			</div>
+        
+            <div class="col-md-4 text-center text-lg-right">
+                       
                     <div class="right-bar">
                         <!-- Search Form -->
                         <div class="sinlge-bar shopping">
@@ -97,8 +108,13 @@
                                         {{-- {{Helper::getAllProductFromCart()}} --}}
                                             @foreach(Helper::getAllProductFromCart() as $data)
                                                     @php
-                                                       // $photo=explode(',',$data->product['photo']);
-                                                        $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$data->product->images[0]->filename;
+
+                                                    if(count($data->product->images)>0){
+                                                    $fimg_url = 'http://cdn.wpsstatic.com/images/full/'.$data->product->images[0]->filename;
+                                                    }else{
+                                                        $fimg_url = asset('backend/img/thumbnail-default.jpg');
+                                                    }
+                                                        
                                                     @endphp
                                                     
                                                     <li>
@@ -146,17 +162,93 @@
     <div class="container-fluid position-relative nav-bar p-0">
         <div class="position-relative">
             <nav class="navbar navbar-expand-lg navbar-dark py-3 py-lg-0 pl-3 pl-lg-5">
-                <a href="" class="navbar-brand">
+                <a href="{{route('home')}}" class="navbar-brand">
 						@php
                             $settings=DB::table('settings')->get();
+                            
+                            if(isset($product_category) && isset($product_brand)){
+                                $productTypes =$fproductsTypesData;
+                            }else{
+                                $productTypes = DB::table('items')->groupBy('product_type')->orderBy('product_type','ASC')->pluck('product_type','product_type');
+
+                            }
+                          //  $fbrands = DB::table('brands')->has('items')->orderBy('title','ASC')->pluck('title','wps_id');
+
+                          if(isset($product_category)){
+                            $fbrands = $filter_brands;
+                          }else{
+                            $fbrands = DB::table('brands')
+                            ->join('items', 'brands.wps_id', '=', 'items.brand_id')
+                            ->orderBy('brands.title', 'ASC')
+                            ->pluck('brands.title', 'brands.wps_id');
+                          }
+                          if(isset($product_category) && !isset($product_brand) && !isset($product_type)){
+                           
+                            $productTypes = $filtered_product_types;
+                          }
+                          if(!isset($product_category) && isset($product_brand) && !isset($product_type)){
+                           
+                           $productTypes = $fproductsTypesData;
+                         }
+                         // fproductsTypesData
+                         
+                            $fcategories = DB::table('categories')->where('vocabulary_id',15)->orderBy('title','ASC')->pluck('title','wps_id');
+
+                           // print_r($productTypes);
+                          //  print_r('<br>');
+                         //   print_r($fbrands);
+                          //  print_r('<br>');
+                           // die;
+                          //  print_r($fcategories);
+
                         @endphp  
                     <img src="@foreach($settings as $data) {{$data->logo}} @endforeach" />
                 </a>
-				<div class="search-tab">	
-                <form method="POST" action="{{route('product.search')}}">
+				<div class="search-tab search-tab-new" id="top-search">
+
+                <form class="top-search-form" method="POST" action="{{route('product.search')}}">
                                 @csrf
-					<input class="search-input" type="text" id="searchwords" name="textsearch" autocorrect="off">
-					<button id="searchButton" class="search-button"><span class="sr-only">Search</span><i class="fa fa-search" aria-hidden="true"></i></button>
+                          <p class="headline-title">Search Products:</p>
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                        <select name="product_category" formcontrolname="product_category" class="form-control" id="product_category">
+                            <option value="">Select Categories</option>
+                            
+                            @foreach($fcategories as $ckey => $fcategorie)
+                            <option value="{{$ckey}}" @if(isset($product_category) && $product_category == $ckey) selected @endif>{{$fcategorie}}</option>
+                            @endforeach
+                            <!-- Add options dynamically if needed -->
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <select name="product_brand" formcontrolname="product_brand" class="form-control" id="product_brand">
+                            <option value="">Select Brand</option>
+                            
+                            @foreach($fbrands as $bkey => $fbrand)
+                            <option value="{{ $bkey }}" @if(isset($product_brand) && $product_brand == $bkey) selected @endif>{{ $fbrand }}</option>
+                            @endforeach
+                            <!-- Add options dynamically if needed -->
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <select name="product_type" formcontrolname="product_type" class="form-control" id="product_type">
+                            <option value="">Select Product Type</option>
+                            
+                            @foreach($productTypes as $pkey => $productType)
+                            <option value="{{$pkey}}" @if(isset($product_type) && $product_type == $pkey) selected @endif>{{$productType}}</option>
+                            @endforeach
+                            <!-- Add options dynamically if needed -->
+                        </select>
+                    </div>
+                  
+                    <!-- <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-block btn-primary" id="search-product">Search</button>
+                </div> -->
+                   
+
+                </div>
+					<!-- <input class="search-input" type="text" id="searchwords" name="search" autocorrect="off"> -->
+					<!-- <button id="searchButton" class="search-button"><span class="sr-only">Search</span><i class="fa fa-search" aria-hidden="true"></i></button> -->
                 </form>
                 </div>
 				<div class="nav-text">
@@ -170,7 +262,7 @@
 
 	<div class="container-fluid sticky-top nav-bar px-3">
         <div class="position-relative">
-            <nav class="navbar navbar-expand-lg navbar-dark">
+            <nav class="navbar navbar-expand-lg navbar-dark desktop">
                 <div class="collapse navbar-collapse justify-content-between px-3" id="navbarCollapse">
                     <div class="navbar-nav py-0">
                     <ul class="nav main-menu menu navbar-nav">
@@ -185,8 +277,37 @@
                     </div>
                 </div>
             </nav>
+			
+		<nav class="navbar navbar-expand-lg navbar-light mobile">
+		  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		  </button>
+
+		  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+			<ul class="navbar-nav mr-auto">
+			  <li class="nav-item {{Request::path()=='home' ? 'active' : ''}}">
+				<a class="nav-link" href="{{route('home')}}">Home</span></a>
+			  </li>
+			  <li class="nav-item {{Request::path()=='about-us' ? 'active' : ''}}">
+				<a class="nav-link" href="{{route('about-us')}}">About Us</a>
+			  </li>
+			  <li class="nav-item @if(Request::path()=='product-grids'||Request::path()=='product-lists')  active  @endif">
+				<a class="nav-link" href="{{route('product-grids')}}" >Products<span class="new">New</span></a>
+			  </li>
+			  {{Helper::getHeaderAttributeValues()}} 
+			  <li class="nav-item {{Request::path()=='blog' ? 'active' : ''}}">
+				<a class="nav-link" href="{{route('blog')}}">Blog</a>
+			  </li>
+			  <li class="nav-item {{Request::path()=='contact' ? 'active' : ''}}">
+				<a class="nav-link" href="{{route('contact')}}">Contact Us</a>
+			  </li>
+			</ul>
+		  </div>
+		</nav>
         </div>
     </div>
+	
+	
 
 
    
